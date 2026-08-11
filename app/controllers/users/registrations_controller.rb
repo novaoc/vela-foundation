@@ -10,7 +10,7 @@ class Users::RegistrationsController < Devise::RegistrationsController
   # and in which flow.
   def create
     super do |user|
-      record_legal_acceptance(user) if user.persisted?
+      LegalAcceptance.record!(user: user, request: request, context: "signup") if user.persisted?
     end
   end
 
@@ -18,16 +18,5 @@ class Users::RegistrationsController < Devise::RegistrationsController
 
   def configure_sign_up_params
     devise_parameter_sanitizer.permit(:sign_up, keys: [ :legal_assent ])
-  end
-
-  def record_legal_acceptance(user)
-    user.legal_acceptances.create!(
-      terms_version: Foundation::Legal::TERMS_VERSION,
-      privacy_version: Foundation::Legal::PRIVACY_VERSION,
-      accepted_at: Time.current,
-      ip: request.remote_ip,
-      user_agent: request.user_agent.to_s.byteslice(0, 255),
-      context: "signup"
-    )
   end
 end

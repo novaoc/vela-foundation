@@ -2,11 +2,15 @@ class User < ApplicationRecord
   # :timeoutable is deliberately not enabled: sessions are long-lived via
   # :rememberable, and an idle timeout on top of remember-me cookies mostly
   # produces surprise logouts. Enable it here if your product needs one.
+  # :omniauthable draws request/callback routes for whichever providers
+  # config/initializers/devise.rb registered from the environment; with no
+  # OAuth credentials present the app still boots and simply has none.
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable,
-         :confirmable, :lockable
+         :confirmable, :lockable, :omniauthable
 
   has_many :legal_acceptances, dependent: :destroy
+  has_many :identities, dependent: :destroy
 
   # Virtual attribute backing the signup assent checkbox. Registration posts
   # "1" when the box is ticked; anything else (including a missing param —
@@ -23,6 +27,32 @@ class User < ApplicationRecord
   validates :email, nondisposable: true, on: :create
 
   before_create :skip_confirmation_for_offline_preview
+
+  # Whether this account can sign in with a password at all. OAuth-created
+  # accounts have none (encrypted_password stays blank) until the user sets
+  # one through the password-reset flow.
+  def password_configured?
+    encrypted_password.present?
+  end
+
+  # SPEC M3.3: an identity may be disconnected only while some other way to
+  # sign in remains — a password, or at least one other identity.
+  def removable_identity?(identity)
+    password_configured? || identities.where.not(id: identity.id).exists?
+  end
+
+  # Devise's :validatable demands a password on create. An OAuth signup
+  # builds the user together with its first identity and no password at all
+  # (the provider is the sign-in method), so relax the requirement for
+  # exactly that case. A password that IS supplied — on any path — keeps
+  # every stock validation.
+  def password_required?
+    oauth_signup = new_record? && identities.any? &&
+      password.blank? && password_confirmation.blank?
+    return false if oauth_signup
+
+    super
+  end
 
   private
 

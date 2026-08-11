@@ -64,6 +64,13 @@ gem "rails_cloudflare_turnstile"
 # Foundation: reject disposable email addresses at signup [https://github.com/rameerez/nondisposable]
 gem "nondisposable"
 
+# Foundation: OAuth sign-in (SPEC M3) — Google and GitHub strategies plus
+# CSRF protection for the OmniAuth request phase, driven through Devise's
+# :omniauthable module.
+gem "omniauth-google-oauth2"
+gem "omniauth-github"
+gem "omniauth-rails_csrf_protection"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"

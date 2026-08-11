@@ -9,3 +9,9 @@ unconfirmed:
   encrypted_password: <%= Devise::Encryptor.digest(User, "correct horse battery") %>
   confirmation_token: fixture-confirmation-token
   confirmation_sent_at: <%= Time.utc(2026, 1, 1).to_fs(:db) %>
+
+# Signed up through OAuth: no password (encrypted_password stays at its
+# blank default), so its single identity is the only way in.
+oauth_only:
+  email: oauth-only@example.com
+  confirmed_at: <%= Time.utc(2026, 1, 1).to_fs(:db) %>

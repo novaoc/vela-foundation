@@ -212,7 +212,8 @@ Feature-flagged by `foundation.yml` (`storefront_enabled`).
    prices — client-provided amounts are never trusted.
 3. **Guest-first checkout**: no account required. Checkout collects and
    validates an email (signed-in users' email is used automatically);
-   quantity capped (1–10).
+   quantity capped (1–10). Terms and Privacy links are visible at
+   checkout (as well as signup and the footer).
 4. Real deployments: Stripe Checkout session with server-set amounts and
    a signed order-return token; fulfillment happens ONLY through the
    Stripe webhook, which verifies signature, session, client reference,
@@ -257,6 +258,13 @@ Feature-flagged by `foundation.yml` (`storefront_enabled`).
    SMTP env present → :smtp; else preview → :test (in-memory); else the
    app's configured production provider. Delivery errors raise except in
    offline preview.
+   Mail sender defaults to `MAILER_FROM` when present, else the
+   foundation support mailbox; mail headers must never carry another
+   application's identity (the hosting relay may rewrite From/Reply-To;
+   the app itself sends only its own identity).
+   URL host for ALL generated links (confirmation, password reset,
+   receipts): `ENV["APP_HOST"]` when present (the deploy runtime injects
+   the app's real public hostname), else the foundation.yml domain.
 3. Auto-confirmation (M2.5) applies only when preview mode is on AND no
    SMTP relay is configured.
 4. Readiness endpoint reflects preview state truthfully (storage local,

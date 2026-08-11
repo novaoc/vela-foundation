@@ -24,5 +24,7 @@
     <%= f.submit "Sign in", class: "w-full rounded-md bg-gray-900 px-4 py-2.5 font-medium text-white hover:bg-gray-700" %>
   <% end %>
 
+  <%= render "devise/shared/oauth_buttons" %>
+
   <%= render "devise/shared/links" %>
 </section>

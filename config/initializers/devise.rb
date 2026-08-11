@@ -51,4 +51,29 @@ Devise.setup do |config|
   # redirects after non-GET requests.
   config.responder.error_status = :unprocessable_content
   config.responder.redirect_status = :see_other
+
+  # SPEC M3.1: OAuth providers register only when their full credential pair
+  # is present in the environment, so a bare checkout boots — and hides the
+  # sign-in buttons — with no OAuth setup at all. Keep the variable names in
+  # sync with Foundation::Oauth::PROVIDERS (lib/foundation/oauth.rb), which
+  # views and controllers use for the same check at request time.
+  #
+  # GitHub needs the user:email scope or it withholds the address the
+  # linking rules key on; Google includes email in its default scope.
+  {
+    google_oauth2: { env: %w[GOOGLE_OAUTH_CLIENT_ID GOOGLE_OAUTH_CLIENT_SECRET], options: {} },
+    github: { env: %w[GITHUB_OAUTH_CLIENT_ID GITHUB_OAUTH_CLIENT_SECRET], options: { scope: "user:email" } }
+  }.each do |provider, spec|
+    id, secret = spec[:env].map { |name| ENV[name] }
+
+    if id.present? && secret.present?
+      config.omniauth provider, id, secret, spec[:options]
+    elsif Rails.env.test?
+      # The suite drives OmniAuth in its test mode, which never contacts a
+      # provider — but callback routes only exist for registered providers,
+      # so tests register everything with stand-in credentials. Button
+      # visibility still follows the live ENV via Foundation::Oauth.
+      config.omniauth provider, "#{provider}-test-id", "#{provider}-test-secret", spec[:options]
+    end
+  end
 end

@@ -30,6 +30,7 @@
         <div class="flex items-center gap-4 text-sm">
           <% if user_signed_in? %>
             <span class="text-gray-600"><%= current_user.email %></span>
+            <%= link_to "Connections", settings_connections_path, class: "underline underline-offset-2 hover:text-gray-600" %>
             <%= button_to "Sign out", destroy_user_session_path, method: :delete,
                   class: "underline underline-offset-2 hover:text-gray-600" %>
           <% else %>

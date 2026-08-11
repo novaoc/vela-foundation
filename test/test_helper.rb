@@ -2,6 +2,29 @@ ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
 
+# Drives OmniAuth in its test mode: the request phase never contacts a
+# provider and instead redirects straight to the callback carrying the
+# canned auth hash set by stub_oauth.
+module OmniauthTestHelpers
+  extend ActiveSupport::Concern
+
+  included do
+    teardown do
+      OmniAuth.config.test_mode = false
+      OmniAuth.config.mock_auth.except!(:google_oauth2, :github)
+    end
+  end
+
+  def stub_oauth(provider, uid:, email:)
+    OmniAuth.config.test_mode = true
+    OmniAuth.config.mock_auth[provider] = OmniAuth::AuthHash.new(
+      provider: provider.to_s,
+      uid: uid,
+      info: { email: email }
+    )
+  end
+end
+
 module ActiveSupport
   class TestCase
     # Run tests in parallel with specified workers
