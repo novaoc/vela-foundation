@@ -5,23 +5,23 @@
     <div>
       <%= f.label :email, class: "block text-sm font-medium" %>
       <%= f.email_field :email, autofocus: true, autocomplete: "email", required: true,
-            class: "mt-1 block w-full rounded-md border border-gray-300 px-3 py-2" %>
+            class: "mt-1 block w-full rounded-md border border-md-outline px-3 py-2" %>
     </div>
 
     <div>
       <%= f.label :password, class: "block text-sm font-medium" %>
       <%= f.password_field :password, autocomplete: "current-password", required: true,
-            class: "mt-1 block w-full rounded-md border border-gray-300 px-3 py-2" %>
+            class: "mt-1 block w-full rounded-md border border-md-outline px-3 py-2" %>
     </div>
 
     <% if devise_mapping.rememberable? %>
       <div class="flex items-center gap-2">
-        <%= f.check_box :remember_me, class: "size-4 rounded border-gray-300" %>
+        <%= f.check_box :remember_me, class: "size-4 rounded border-md-outline" %>
         <%= f.label :remember_me, class: "text-sm" %>
       </div>
     <% end %>
 
-    <%= f.submit "Sign in", class: "w-full rounded-md bg-gray-900 px-4 py-2.5 font-medium text-white hover:bg-gray-700" %>
+    <%= f.submit "Sign in", class: "w-full rounded-md bg-md-primary px-4 py-2.5 font-medium text-md-on-primary hover:bg-md-primary" %>
   <% end %>
 
   <%= render "devise/shared/oauth_buttons" %>

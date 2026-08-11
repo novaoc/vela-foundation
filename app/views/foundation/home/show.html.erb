@@ -1,14 +1,75 @@
-<%# Minimal landing page; the M7 marketing set replaces this. %>
-<section class="mx-auto max-w-xl text-center">
-  <h1 class="text-3xl font-semibold"><%= Rails.configuration.x.foundation[:application_name] %></h1>
-  <p class="mt-4 text-gray-600"><%= Rails.configuration.x.foundation[:default_page_description] %></p>
+<% identity = Rails.configuration.x.foundation %>
+<% title identity[:default_page_title] %>
 
-  <% unless user_signed_in? %>
-    <div class="mt-8 flex justify-center gap-4">
-      <%= link_to "Create an account", new_user_registration_path,
-            class: "rounded-md bg-gray-900 px-4 py-2.5 font-medium text-white hover:bg-gray-700" %>
-      <%= link_to "Sign in", new_user_session_path,
-            class: "rounded-md border border-gray-300 px-4 py-2.5 font-medium hover:bg-gray-50" %>
+<section class="md-hero" aria-labelledby="hero-title">
+  <div class="md-hero__inner">
+    <div>
+      <p class="md-section__eyebrow">A clearer way to build</p>
+      <h1 id="hero-title">Bring the work that matters into focus.</h1>
+      <p><%= identity[:default_page_description] %> Thoughtful defaults for teams that want dependable software without needless complexity.</p>
+      <div class="md-actions">
+        <% if user_signed_in? %>
+          <%= link_to "Open your workspace", organizations.organizations_path, class: "md-button md-button--filled" %>
+          <%= link_to "Manage billing", billing_path, class: "md-button md-button--outlined" %>
+        <% else %>
+          <%= link_to "Start building", new_user_registration_path, class: "md-button md-button--filled" %>
+          <%= link_to "Explore plans", pricing_path, class: "md-button md-button--outlined" %>
+        <% end %>
+      </div>
     </div>
-  <% end %>
+    <div class="md-hero__art" aria-hidden="true"><div class="md-hero__orb"></div></div>
+  </div>
+</section>
+
+<section class="md-section" aria-labelledby="features-title">
+  <div class="md-section__inner">
+    <p class="md-section__eyebrow">Designed for momentum</p>
+    <h2 id="features-title" class="md-section__heading">Everything your team needs, arranged around the way people work.</h2>
+    <div class="md-grid">
+      <article class="md-card md-card--filled md-feature">
+        <span class="md-feature__number">01</span>
+        <div><h3>One shared context</h3><p>Keep organizations, access, and decisions together so everyone can find the next step.</p></div>
+      </article>
+      <article class="md-card md-card--filled md-feature">
+        <span class="md-feature__number">02</span>
+        <div><h3>Secure by default</h3><p>Strong account controls and deliberate permissions protect the work without slowing it down.</p></div>
+      </article>
+      <article class="md-card md-card--filled md-feature">
+        <span class="md-feature__number">03</span>
+        <div><h3>Ready to grow</h3><p>Flexible plans and a responsive workspace give small teams and larger groups room to move.</p></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="md-section md-section--tonal" aria-labelledby="plans-title">
+  <div class="md-section__inner">
+    <p class="md-section__eyebrow">Simple plans</p>
+    <h2 id="plans-title" class="md-section__heading">Start with what fits today.</h2>
+    <div class="md-pricing-grid">
+      <% PricingPlans.plans.each do |plan| %>
+        <% cents = plan.metadata.dig(:prices, :month) %>
+        <article class="md-card <%= plan.highlighted? ? "md-card--elevated" : "md-card--outlined" %> md-price-card">
+          <% if plan.highlighted? %><span class="md-chip selected">Recommended</span><% end %>
+          <h3><%= plan.name %></h3>
+          <p><%= plan.description %></p>
+          <p class="md-price-card__price"><%= cents.zero? ? "Free" : number_to_currency(cents / 100.0, precision: 0) %><%= "/month" unless cents.zero? %></p>
+          <ul><% plan.bullets.first(3).each do |bullet| %><li><%= bullet %></li><% end %></ul>
+          <%= link_to "View #{plan.name}", pricing_path, class: "md-button #{plan.highlighted? ? "md-button--filled" : "md-button--outlined"}" %>
+        </article>
+      <% end %>
+    </div>
+  </div>
+</section>
+
+<section class="md-section" aria-labelledby="faq-title">
+  <div class="md-section__inner">
+    <p class="md-section__eyebrow">Questions, answered</p>
+    <h2 id="faq-title" class="md-section__heading">A straightforward place to begin.</h2>
+    <div class="md-faq">
+      <details><summary>Can I begin on the free plan?</summary><p>Yes. Create an account and move to another plan when your organization needs more.</p></details>
+      <details><summary>Can teammates share a workspace?</summary><p>Yes. Organization owners can invite people and choose the right role for each member.</p></details>
+      <details><summary>Can I change plans later?</summary><p>Yes. Eligible organizations can compare plans and manage an active subscription from billing.</p></details>
+    </div>
+  </div>
 </section>

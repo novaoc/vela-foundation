@@ -5,12 +5,12 @@
     cross-site redirect to the provider itself. %>
 <% configured = Foundation::Oauth.configured_providers %>
 <% if configured.any? %>
-  <div class="mt-6 space-y-3 border-t border-gray-200 pt-6">
+  <div class="mt-6 space-y-3 border-t border-md-outline-variant pt-6">
     <% configured.each do |provider| %>
       <%= button_to "Continue with #{Foundation::Oauth.label(provider)}",
             omniauth_authorize_path(:user, provider),
             data: { turbo: false },
-            class: "w-full rounded-md border border-gray-300 px-4 py-2.5 font-medium hover:bg-gray-50" %>
+            class: "w-full rounded-md border border-md-outline px-4 py-2.5 font-medium hover:bg-md-surface-container" %>
     <% end %>
   </div>
 <% end %>

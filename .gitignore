@@ -30,6 +30,11 @@
 
 /public/assets
 
+# Reproducible Material token tooling installs locally; generated CSS/JSON are
+# committed, never the package installation.
+/tools/material/node_modules
+/tools/material/.generated
+
 # Ignore key files for decrypting credentials and more.
 /config/*.key
 

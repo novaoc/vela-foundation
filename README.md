@@ -42,7 +42,14 @@ Current foundation (more milestones land incrementally):
 - Per-device sign-in tracking records device/browser, IP, last activity, and
   authentication method. The append-only event trail is retained for 12
   months by default and swept daily by Solid Queue.
-- Coming next: a Material Design 3 design system and an optional storefront.
+- Rails-native Material Design 3 system: deterministic light/dark semantic
+  tokens generated from the configured brand seed, accessible ERB components,
+  local subset Material Symbols Rounded, persisted system/light/dark theme,
+  and exact adaptive navigation/layout classes from compact through
+  extra-large.
+- Production-ready public marketing, authentication, organization, billing,
+  and admin shells, with branded static error pages and no runtime asset CDN.
+- Coming next: the optional storefront module.
 
 ## Product identity
 
@@ -51,6 +58,34 @@ brand seed color, default page title/description, social links, support and
 legal mailboxes, domain, and feature flags. It is available everywhere as
 `Rails.configuration.x.foundation` (string or symbol keys). Edit it first
 when turning the template into a real product.
+
+## Material Design 3
+
+The design system is documented in
+[`docs/MATERIAL_DESIGN_3.md`](docs/MATERIAL_DESIGN_3.md), including component
+usage, accessibility rules, adaptive breakpoints, theme behavior, and brand
+re-seeding. Generated color CSS and JSON are committed, so production needs no
+Node runtime. To intentionally regenerate after changing
+`brand_seed_color`:
+
+```sh
+cd tools/material
+npm ci
+npm run generate:tokens
+cd ../..
+tools/material/generate_symbols.sh # only when the symbol inventory changes
+bin/rails tailwindcss:build
+```
+
+Offline template-renaming environments with Node can run
+`node tools/material/dist/generate_tokens.mjs` without installing packages;
+the committed bundle contains the pinned color algorithm and has a `--check`
+mode. `npm test` verifies the reviewed bundle against a fresh pinned build.
+
+Material Color Utilities and the local Material Symbols subset are
+Apache-2.0 licensed; exact versions, revisions, hashes, and notices are in
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). The application remains
+MIT licensed.
 
 ## Quickstart
 

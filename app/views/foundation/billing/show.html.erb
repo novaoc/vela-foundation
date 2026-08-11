@@ -1,37 +1,36 @@
 <% title "Billing" %>
 
-<section class="mx-auto max-w-2xl">
-  <h1 class="text-3xl font-semibold">Billing</h1>
-  <p class="mt-2 text-gray-600">Subscription and plan settings for <strong><%= @organization.name %></strong>.</p>
+<section class="md-page md-page--narrow md-stack">
+  <header>
+    <p class="md-section__eyebrow">Workspace settings</p>
+    <h1>Billing</h1>
+    <p class="text-md-on-surface-variant">Subscription and plan settings for <strong><%= @organization.name %></strong>.</p>
+  </header>
 
-  <div class="mt-8 rounded-xl border border-gray-200 p-6">
-    <div class="flex items-start justify-between gap-4">
-      <div>
-        <p class="text-sm text-gray-500">Current plan</p>
-        <h2 class="text-2xl font-semibold"><%= @plan.name %></h2>
-      </div>
-      <% if @source == :assignment %>
-        <span class="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-900">Manually assigned</span>
-      <% elsif @source == :subscription %>
-        <span class="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-900">Stripe subscription</span>
-      <% else %>
-        <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium">Free plan</span>
-      <% end %>
+  <article class="md-card md-card--elevated md-stack">
+    <div>
+      <p class="text-md-on-surface-variant">Current plan</p>
+      <h2><%= @plan.name %></h2>
     </div>
+    <% if @source == :assignment %>
+      <span class="md-chip selected">Manually assigned</span>
+    <% elsif @source == :subscription %>
+      <span class="md-chip selected">Stripe subscription</span>
+    <% else %>
+      <span class="md-chip">Free plan</span>
+    <% end %>
 
-    <div class="mt-6 flex flex-wrap gap-3">
+    <div class="md-actions">
       <% if @organization.billing_management_available? %>
-        <%= button_to "Manage subscription", billing_portal_path,
-              data: { turbo: false },
-              class: "rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white" %>
+        <%= button_to "Manage subscription", billing_portal_path, data: { turbo: false }, class: "md-button md-button--filled" %>
       <% end %>
       <% if @organization.show_self_serve_plan_ctas? %>
-        <%= link_to "Compare plans", pricing_path, class: "rounded-md border border-gray-300 px-4 py-2 text-sm font-medium" %>
+        <%= link_to "Compare plans", pricing_path, class: "md-button md-button--outlined" %>
       <% end %>
     </div>
 
     <% if @source == :assignment && @organization.billing_management_available? %>
-      <p class="mt-4 text-sm text-gray-600">Your administrator controls feature access. The billing portal remains available for the separate live subscription.</p>
+      <p class="text-md-on-surface-variant">Your administrator controls feature access. The billing portal remains available for the separate live subscription.</p>
     <% end %>
-  </div>
+  </article>
 </section>
