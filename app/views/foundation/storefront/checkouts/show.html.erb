@@ -14,8 +14,13 @@
       <div class="md-field"><%= form.label :email, "Email for receipt and order updates" %><%= form.email_field :email, required: true, autocomplete: "email", maxlength: 254 %></div>
       <p>No account is required. We never attach an order to an account by matching its email.</p>
     <% end %>
-    <label class="md-choice">
+    <%# The control span is what is actually visible: the real input is reduced
+        to 1px and transparent by the design system, so omitting it here left a
+        required checkbox with nothing to tick. Mirrors components/_choice,
+        which cannot be reused directly because this label carries links. %>
+    <label class="md-choice md-choice--checkbox">
       <%= form.check_box :legal_assent, required: true %>
+      <span class="md-choice__control" aria-hidden="true"></span>
       <span>I agree to the <%= link_to "Terms of Service", legal_terms_path, target: "_blank", rel: "noopener" %> and acknowledge the <%= link_to "Privacy Policy", legal_privacy_path, target: "_blank", rel: "noopener" %>.</span>
     </label>
     <% if Foundation.storefront_simulator? %>

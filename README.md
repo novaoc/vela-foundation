@@ -143,10 +143,20 @@ follow automatically.
 Then, with a local Ruby (see `.ruby-version`) and PostgreSQL:
 
 ```sh
-bin/setup        # install gems, prepare databases, start the dev server
-bin/rails test   # run the test suite
-bin/ci           # full local gate: style, security audits, tests
+bin/setup             # install gems, prepare databases, start the dev server
+bin/rails test        # run the test suite
+bin/rails test:system # run the browser tests (needs Chrome installed)
+bin/ci                # full local gate: style, security audits, tests
 ```
+
+`bin/rails test` deliberately skips `test/system`; `bin/rails test:system`
+runs only those. The browser tests drive headless Chrome through Selenium
+Manager, so no driver binary is committed or downloaded ahead of time. They
+cover the public shell, the Material Design pointer-target floor, and a
+guest walking the storefront from the catalog to checkout. Continuous
+integration runs them as a separate job; `config/ci.rb` leaves the matching
+`bin/ci` step commented out so the local gate stays runnable on a machine
+with no browser.
 
 Without a local Ruby, `bin/dx` runs any command in a container with the repo
 mounted, a persistent bundle volume, and a `vf-pg` PostgreSQL container on
