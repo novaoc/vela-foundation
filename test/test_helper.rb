@@ -45,5 +45,15 @@ module ActiveSupport
     ensure
       previous.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
     end
+
+    # Minitest 6 no longer bundles Object#stub. Keep network-bound tests
+    # explicit by replacing one singleton method for the duration of a block.
+    def with_stubbed_singleton_method(target, method_name, replacement)
+      original = target.method(method_name)
+      target.define_singleton_method(method_name, replacement)
+      yield
+    ensure
+      target.define_singleton_method(method_name, original)
+    end
   end
 end

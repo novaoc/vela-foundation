@@ -47,3 +47,10 @@ Organizations.configure do |config|
     end
   end
 end
+
+# The organizations gem owns this model; attach the app-specific billing and
+# entitlement behavior without copying or replacing the engine's model.
+Rails.application.config.to_prepare do
+  Organizations::Organization.include(Foundation::BillableOrganization) unless
+    Organizations::Organization < Foundation::BillableOrganization
+end

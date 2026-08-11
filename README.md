@@ -30,7 +30,12 @@ Current foundation (more milestones land incrementally):
 - Hosted-preview affordance: when `VELA_HOLODEX_PREVIEW=1` and no
   `SMTP_ADDRESS` is configured, new accounts are confirmed immediately
   (previews cannot send mail); with a relay, normal confirmation applies.
-- Coming next: OAuth, organizations, billing, admin, a Material Design 3
+- Organization-scoped subscription billing: configurable Free, Pro, and
+  Enterprise tiers with monthly/yearly prices and queryable entitlements;
+  Stripe Checkout and customer portal flows; Pay-managed webhook state;
+  manual plan overrides that take precedence without hiding management of a
+  coexisting subscription.
+- Coming next: admin, a Material Design 3
   design system, and an optional storefront.
 
 ## Product identity
@@ -77,6 +82,40 @@ The production image is the standard Rails multi-stage `Dockerfile`
 for Kamal or any container host. Asset precompilation needs no secrets
 (`SECRET_KEY_BASE_DUMMY=1` is used at build time). Point your monitoring at
 `/healthcheck`.
+
+## Billing setup
+
+Plans, presentation prices, Stripe Price IDs, and entitlements live together
+in `config/initializers/pricing_plans.rb`. Replace the descriptive local Price
+IDs with `STRIPE_PRO_MONTHLY_PRICE_ID`, `STRIPE_PRO_YEARLY_PRICE_ID`,
+`STRIPE_ENTERPRISE_MONTHLY_PRICE_ID`, and
+`STRIPE_ENTERPRISE_YEARLY_PRICE_ID` in a deployed environment. Configure Pay
+with `STRIPE_PUBLIC_KEY`, `STRIPE_PRIVATE_KEY`, and
+`STRIPE_SIGNING_SECRET` (or the equivalent Rails credentials), then register
+Stripe webhooks at `/pay/webhooks/stripe`. The web process and `bin/jobs`
+worker must both be running so Pay can apply webhook updates.
+
+The organization is the Pay customer and plan owner. Manual operator grants
+use the pricing_plans console helpers:
+
+```ruby
+organization.assign_pricing_plan!(:enterprise)
+organization.remove_pricing_plan!
+organization.current_pricing_plan_source # :assignment, :subscription, or :default
+organization.plan_allows?(:single_sign_on)
+```
+
+Revenue and customer metrics are available in the Rails console through
+profitable, reading Pay's locally synchronized records without a live Stripe
+query:
+
+```ruby
+Profitable.mrr.to_readable
+Profitable.arr.to_readable
+Profitable.ttm_revenue.to_readable
+Profitable.churn(in_the_last: 30.days).to_readable
+Profitable.active_subscribers.to_readable
+```
 
 ## License
 

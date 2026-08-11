@@ -75,6 +75,14 @@ gem "omniauth-rails_csrf_protection"
 # [https://github.com/rameerez/organizations]
 gem "organizations"
 
+# Foundation: organization-scoped subscriptions, entitlements, and revenue
+# metrics (SPEC M5). Pay persists Stripe webhook state locally;
+# pricing_plans resolves plan access; profitable reads Pay's local records.
+gem "pay", "~> 11.7"
+gem "stripe", "~> 19.0"
+gem "pricing_plans", "~> 0.4"
+gem "profitable", "~> 0.6"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"

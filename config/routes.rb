@@ -13,6 +13,14 @@ Rails.application.routes.draw do
   get "legal/terms",   to: "foundation/legal#terms",   as: :legal_terms
   get "legal/privacy", to: "foundation/legal#privacy", as: :legal_privacy
 
+  # Public tier comparison plus organization-scoped Stripe Checkout and
+  # customer portal flows (SPEC M5). Pay mounts signed webhook endpoints at
+  # /pay/webhooks/:provider separately.
+  get  "pricing",          to: "foundation/pricing#show",  as: :pricing
+  get  "billing",          to: "foundation/billing#show",  as: :billing
+  post "billing/checkout", to: "foundation/billing#checkout", as: :billing_checkout
+  post "billing/portal",   to: "foundation/billing#portal",   as: :billing_portal
+
   # Legal-assent interstitial for first-time OAuth users (SPEC M3.3):
   # shown before any account is created; DELETE declines and abandons it.
   get    "oauth/assent", to: "foundation/oauth_signups#new", as: :oauth_assent

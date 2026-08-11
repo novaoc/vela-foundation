@@ -1,0 +1,56 @@
+<% title "Pricing" %>
+
+<section class="mx-auto max-w-6xl">
+  <div class="text-center">
+    <h1 class="text-4xl font-semibold tracking-tight">Plans for every stage</h1>
+    <p class="mt-3 text-gray-600">Choose monthly flexibility or save with annual billing.</p>
+    <nav class="mt-6 inline-flex rounded-lg border border-gray-300 p-1" aria-label="Billing interval">
+      <% %w[month year].each do |interval| %>
+        <%= link_to interval == "month" ? "Monthly" : "Yearly",
+              pricing_path(interval: interval),
+              class: "rounded-md px-4 py-2 text-sm #{'bg-gray-900 text-white' if @interval == interval}",
+              aria: { current: (@interval == interval ? "page" : nil) } %>
+      <% end %>
+    </nav>
+  </div>
+
+  <% if @organization&.manually_assigned_plan? %>
+    <p role="status" class="mx-auto mt-8 max-w-2xl rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-center text-sm text-blue-900">
+      <strong>Manually assigned plan.</strong> Contact an administrator to change access. Existing subscription billing can still be managed from <%= link_to "Billing", billing_path, class: "underline" %>.
+    </p>
+  <% end %>
+
+  <div class="mt-10 grid gap-6 md:grid-cols-3">
+    <% @plans.each do |plan| %>
+      <% current = @organization && plan == @organization.current_pricing_plan %>
+      <% cents = plan.metadata.dig(:prices, @interval.to_sym) %>
+      <article class="flex flex-col rounded-xl border p-6 <%= plan.highlighted? ? 'border-gray-900 shadow-lg' : 'border-gray-200' %>">
+        <% if plan.highlighted? %><p class="text-xs font-semibold uppercase tracking-wide">Most popular</p><% end %>
+        <h2 class="mt-2 text-2xl font-semibold"><%= plan.name %></h2>
+        <p class="mt-3 min-h-12 text-sm text-gray-600"><%= plan.description %></p>
+        <p class="mt-5 text-3xl font-semibold">
+          <%= cents.zero? ? "Free" : number_to_currency(cents / 100.0, precision: 0) %>
+          <% unless cents.zero? %><span class="text-sm font-normal text-gray-500">/<%= @interval %></span><% end %>
+        </p>
+        <ul class="my-6 grow space-y-2 text-sm">
+          <% plan.bullets.each do |bullet| %><li>✓ <%= bullet %></li><% end %>
+        </ul>
+
+        <% if current %>
+          <span class="rounded-md bg-gray-100 px-4 py-2 text-center text-sm font-medium">Current plan<%= " · manual" if @organization.manually_assigned_plan? %></span>
+        <% elsif @organization&.manually_assigned_plan? %>
+          <span class="rounded-md bg-gray-100 px-4 py-2 text-center text-sm text-gray-600">Administrator managed</span>
+        <% elsif cents.zero? %>
+          <%= link_to "Get started", user_signed_in? ? billing_path : new_user_registration_path, class: "rounded-md border border-gray-300 px-4 py-2 text-center text-sm font-medium" %>
+        <% elsif user_signed_in? %>
+          <%= button_to "Choose #{plan.name}", billing_checkout_path,
+                params: { plan: plan.key, interval: @interval },
+                data: { turbo: false },
+                class: "w-full rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white" %>
+        <% else %>
+          <%= link_to "Sign in to subscribe", new_user_session_path, class: "rounded-md bg-gray-900 px-4 py-2 text-center text-sm font-medium text-white" %>
+        <% end %>
+      </article>
+    <% end %>
+  </div>
+</section>

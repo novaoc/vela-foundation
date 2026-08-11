@@ -14,3 +14,5 @@ produced, by whom, and from which inputs. The reference-similarity gate
 | 2026-08-10 | M3 OAuth + safe account linking | clean-room agent aaa0acf929934e1da | SPEC.md M3, omniauth public docs |
 | 2026-08-10 | M4 organizations | clean-room agent adf1499bf5209da6a | SPEC.md M4, organizations gem public docs |
 | 2026-08-10 | simguard null-model addition: organizations generator probe + migrated schema | orchestrator | public generators only |
+| 2026-08-10 | M5 billing and plans | clean-room task `/root/m5_billing_cleanroom` | SPEC.md M5; public Pay, pricing_plans, profitable, and Stripe Ruby READMEs/docs/licenses; generated Pay/pricing_plans migrations |
+| 2026-08-10 | simguard null-model addition: Pay + pricing_plans generator probe and PostgreSQL schema | clean-room task `/root/m5_billing_cleanroom` | fresh Rails 8.1.3.1 app; public Pay 11.7.0 and pricing_plans 0.4.0 generators only |

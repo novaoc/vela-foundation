@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_11_024404) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_11_040140) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -169,6 +169,150 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_024404) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "pay_charges", force: :cascade do |t|
+    t.integer "amount", null: false
+    t.integer "amount_refunded"
+    t.integer "application_fee_amount"
+    t.datetime "created_at", null: false
+    t.string "currency"
+    t.bigint "customer_id", null: false
+    t.jsonb "data"
+    t.jsonb "metadata"
+    t.jsonb "object"
+    t.string "processor_id", null: false
+    t.string "stripe_account"
+    t.bigint "subscription_id"
+    t.string "type"
+    t.datetime "updated_at", null: false
+    t.index ["customer_id", "processor_id"], name: "index_pay_charges_on_customer_id_and_processor_id", unique: true
+    t.index ["subscription_id"], name: "index_pay_charges_on_subscription_id"
+  end
+
+  create_table "pay_customers", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.jsonb "data"
+    t.boolean "default"
+    t.datetime "deleted_at", precision: nil
+    t.jsonb "object"
+    t.bigint "owner_id"
+    t.string "owner_type"
+    t.string "processor", null: false
+    t.string "processor_id"
+    t.string "stripe_account"
+    t.string "type"
+    t.datetime "updated_at", null: false
+    t.index ["owner_type", "owner_id", "deleted_at"], name: "pay_customer_owner_index", unique: true
+    t.index ["processor", "processor_id"], name: "index_pay_customers_on_processor_and_processor_id", unique: true
+  end
+
+  create_table "pay_merchants", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.jsonb "data"
+    t.boolean "default"
+    t.bigint "owner_id"
+    t.string "owner_type"
+    t.string "processor", null: false
+    t.string "processor_id"
+    t.string "type"
+    t.datetime "updated_at", null: false
+    t.index ["owner_type", "owner_id", "processor"], name: "index_pay_merchants_on_owner_type_and_owner_id_and_processor"
+  end
+
+  create_table "pay_payment_methods", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "customer_id", null: false
+    t.jsonb "data"
+    t.boolean "default"
+    t.string "payment_method_type"
+    t.string "processor_id", null: false
+    t.string "stripe_account"
+    t.string "type"
+    t.datetime "updated_at", null: false
+    t.index ["customer_id", "processor_id"], name: "index_pay_payment_methods_on_customer_id_and_processor_id", unique: true
+  end
+
+  create_table "pay_subscriptions", force: :cascade do |t|
+    t.decimal "application_fee_percent", precision: 8, scale: 2
+    t.datetime "created_at", null: false
+    t.datetime "current_period_end", precision: nil
+    t.datetime "current_period_start", precision: nil
+    t.bigint "customer_id", null: false
+    t.jsonb "data"
+    t.datetime "ends_at", precision: nil
+    t.jsonb "metadata"
+    t.boolean "metered"
+    t.string "name", null: false
+    t.jsonb "object"
+    t.string "pause_behavior"
+    t.datetime "pause_resumes_at", precision: nil
+    t.datetime "pause_starts_at", precision: nil
+    t.string "payment_method_id"
+    t.string "processor_id", null: false
+    t.string "processor_plan", null: false
+    t.integer "quantity", default: 1, null: false
+    t.string "status", null: false
+    t.string "stripe_account"
+    t.datetime "trial_ends_at", precision: nil
+    t.string "type"
+    t.datetime "updated_at", null: false
+    t.index ["customer_id", "processor_id"], name: "index_pay_subscriptions_on_customer_id_and_processor_id", unique: true
+    t.index ["metered"], name: "index_pay_subscriptions_on_metered"
+    t.index ["pause_starts_at"], name: "index_pay_subscriptions_on_pause_starts_at"
+  end
+
+  create_table "pay_webhooks", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.jsonb "event"
+    t.string "event_type"
+    t.string "processor"
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "pricing_plans_assignments", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "plan_key", null: false
+    t.bigint "plan_owner_id", null: false
+    t.string "plan_owner_type", null: false
+    t.string "source", default: "manual", null: false
+    t.datetime "updated_at", null: false
+    t.index ["plan_key"], name: "idx_pricing_plans_assignments_plan"
+    t.index ["plan_owner_type", "plan_owner_id"], name: "idx_pricing_plans_assignments_unique", unique: true
+    t.index ["plan_owner_type", "plan_owner_id"], name: "index_pricing_plans_assignments_on_plan_owner"
+  end
+
+  create_table "pricing_plans_enforcement_states", force: :cascade do |t|
+    t.datetime "blocked_at"
+    t.datetime "created_at", null: false
+    t.jsonb "data", default: {}
+    t.datetime "exceeded_at"
+    t.datetime "last_warning_at"
+    t.decimal "last_warning_threshold", precision: 3, scale: 2
+    t.string "limit_key", null: false
+    t.bigint "plan_owner_id", null: false
+    t.string "plan_owner_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["exceeded_at"], name: "idx_pricing_plans_enforcement_exceeded", where: "(exceeded_at IS NOT NULL)"
+    t.index ["plan_owner_type", "plan_owner_id", "limit_key"], name: "idx_pricing_plans_enforcement_unique", unique: true
+    t.index ["plan_owner_type", "plan_owner_id"], name: "idx_pricing_plans_enforcement_plan_owner"
+    t.index ["plan_owner_type", "plan_owner_id"], name: "index_pricing_plans_enforcement_states_on_plan_owner"
+  end
+
+  create_table "pricing_plans_usages", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "last_used_at"
+    t.string "limit_key", null: false
+    t.datetime "period_end", null: false
+    t.datetime "period_start", null: false
+    t.bigint "plan_owner_id", null: false
+    t.string "plan_owner_type", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "used", default: 0, null: false
+    t.index ["period_start", "period_end"], name: "idx_pricing_plans_usages_period"
+    t.index ["plan_owner_type", "plan_owner_id", "limit_key", "period_start"], name: "idx_pricing_plans_usages_unique", unique: true
+    t.index ["plan_owner_type", "plan_owner_id"], name: "idx_pricing_plans_usages_plan_owner"
+    t.index ["plan_owner_type", "plan_owner_id"], name: "index_pricing_plans_usages_on_plan_owner"
+  end
+
   create_table "users", force: :cascade do |t|
     t.datetime "confirmation_sent_at"
     t.string "confirmation_token"
@@ -206,4 +350,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_024404) do
   add_foreign_key "organizations_memberships", "organizations_organizations", column: "organization_id"
   add_foreign_key "organizations_memberships", "users"
   add_foreign_key "organizations_memberships", "users", column: "invited_by_id"
+  add_foreign_key "pay_charges", "pay_customers", column: "customer_id"
+  add_foreign_key "pay_charges", "pay_subscriptions", column: "subscription_id"
+  add_foreign_key "pay_payment_methods", "pay_customers", column: "customer_id"
+  add_foreign_key "pay_subscriptions", "pay_customers", column: "customer_id"
 end
