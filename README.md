@@ -18,6 +18,11 @@ New applications are generated from it, stamped with an identity, and then
 built on. Every file here is copied into the generated application, so there
 is no hidden runtime, no vendor SDK, and nothing to license.
 
+Generation is a **one-way fork**. A generated application never pulls foundation
+updates. The foundation is a menu the generator picks from: modules that fit
+are copied in; modules that do not are **absent** from the generated repository,
+not shipped and disabled. See [`docs/MODULES.md`](docs/MODULES.md).
+
 It is deliberately close to stock Rails. The framework-specific surface is one
 `Foundation` namespace, one `config/foundation.yml`, and a `foundation--*`
 Stimulus prefix; everything else is Rails 8.1 as it ships.
@@ -28,8 +33,9 @@ Cache, and Solid Cable run on the same database by default, so a small
 deployment is one app container and one database; separate `*_DATABASE_URL`
 values split them apart when it grows. Puma behind Thruster. Tailwind CSS v4
 compiled against Material Design 3 tokens. Devise, OmniAuth, Pay, and Madmin
-carry authentication, OAuth, billing, and admin. All dependencies are
-permissively licensed gems from rubygems.org.
+carry authentication, OAuth, billing, and admin. Kamal is optional operator
+tooling (`require: false`). All dependencies are permissively licensed gems
+from rubygems.org.
 
 **Configuration is a boot-time snapshot.** `Foundation::RuntimeConfig` reads
 and validates the deploy environment once at startup and freezes it, so
@@ -37,17 +43,22 @@ request data and later `ENV` mutation can never become URL, mail, payment, or
 storage configuration. Invalid settings fail the boot instead of surfacing as
 a bad link in a password-reset email. In production the app's public host is
 pinned to its configured domain, which is what stops an injected `APP_HOST`
-from moving payment return URLs or emailed links somewhere else.
+from moving payment return URLs or emailed links somewhere else. Production
+also authorizes request `Host` headers against that same domain (and its
+subdomains), so DNS-rebinding cannot reach the app behind a foreign host.
 
 ## What the foundation provides
 
 **Accounts.** Devise email/password authentication with required email
 confirmation, lockout after repeated failures, and a 12-character password
-minimum. Cloudflare Turnstile guards registration and password reset when its
-keys are present; disposable email domains are rejected. Signup records which
-version of the Terms and Privacy pages the user accepted — useful whenever
-those documents change. The pages themselves are plain Markdown at
-`/legal/terms` and `/legal/privacy`; edit or delete them freely.
+minimum. Confirmation can be resent through a rate-limited endpoint that does
+not reveal whether an address is registered. Cloudflare Turnstile guards
+registration, password reset, and confirmation resend when its keys are
+present; disposable email domains are rejected (the blocklist refreshes on a
+schedule). Signup records which version of the Terms and Privacy pages the
+user accepted — useful whenever those documents change. The pages themselves
+are plain Markdown at `/legal/terms` and `/legal/privacy`; edit or delete
+them freely.
 
 **OAuth with safe linking.** Google and GitHub sign-in with CSRF-protected
 request phases. Identities are stored per provider and uid. An OAuth sign-in
@@ -56,6 +67,16 @@ person is asked to sign in with their existing credentials and link the
 provider explicitly from their settings. Unlinking is refused when it would
 leave an account with no way to sign in. First-time OAuth users pass through
 a short interstitial before any account row is written.
+
+**Step-up reauthentication and devices.** Sensitive mutations require a
+fresh identity proof inside a fail-closed trust window: password confirmation
+or re-proving an already-linked OAuth provider. The window gates the billing
+portal, plan assignment and removal, identity unlinking, email and password
+change, organization deletion, and session revocation. Rate limits cover
+account and client address. End users list and revoke their own live sessions
+from settings; ownership is checked server-side, and probing another user's
+session id is indistinguishable from a missing id. Admin session revocation
+stays ungated so incident response is not slowed.
 
 **Organizations, roles, and invitations.** Every signup creates a personal
 organization unless it arrives through an invitation. Users create additional
@@ -69,10 +90,12 @@ session-persisted scope for application code.
 **Billing and plans.** Free, Pro, and Enterprise example tiers with monthly
 and yearly prices and queryable entitlements, defined in one initializer. A
 public pricing page with an interval toggle, Stripe Checkout, a customer
-portal link, and webhook-driven subscription state through Pay. The
-organization is the billable entity. Operators can assign a plan manually;
-manual assignment takes precedence over a subscription, is marked in the UI,
-and still exposes billing management when a live subscription coexists.
+portal link, and webhook-driven subscription state through Pay. A billing
+policy object and presenter own self-serve rules, badges, and calls-to-action
+so views do not branch on plan source. The organization is the billable
+entity. Operators can assign a plan manually; manual assignment takes
+precedence over a subscription, is marked in the UI, and still exposes
+billing management when a live subscription coexists.
 
 **Administration.** An operator console at `/admin/dashboard`, gated on
 `User#admin?` alone — organization roles grant no access, and no form, seed,
@@ -89,20 +112,47 @@ plus Stimulus controllers: buttons, cards, text fields, selects, checkboxes
 and switches, chips, focus-trapped dialogs, menus, snackbars, top app bar,
 and navigation that swaps between bottom bar, rail, and drawer across the
 five breakpoints. Icons come only from a locally subset Material Symbols
-Rounded font — no icon CDN, no runtime font fetch. Accessibility rules
-(48px targets, visible focus, AA contrast, reduced motion, 200% zoom) are
-part of the contract. See
+Rounded font — no icon CDN, no runtime font fetch. Transactional mail uses
+the same tokens with critical styles inlined at render (mail clients strip
+`<head>` CSS) and plain-text alternatives for every HTML message.
+Accessibility rules (48px targets, visible focus, AA contrast, reduced
+motion, 200% zoom) are part of the contract. See
 [`docs/MATERIAL_DESIGN_3.md`](docs/MATERIAL_DESIGN_3.md).
 
-**Guest-first storefront** (optional, enabled by default). A catalog,
-cart, and checkout that require no account: checkout collects and validates
-an email, caps quantity, and shows Terms and Privacy links. Amounts are
-always computed server-side from product prices. Fulfillment happens only
-through the verified Stripe webhook, which checks signature, session, client
+**Native mobile shell.** A versioned, per-platform path-configuration
+endpoint, native entry and auth handoff, a current-user poll, and Apple /
+Android deep-link association documents built from configuration. Every
+native-only behaviour is gated on Hotwire Native user-agent detection;
+ordinary browsers receive 404. Step-up reauthentication and host
+authorization are not weakened for native clients. See
+[`docs/native/SERVER_CONTRACT.md`](docs/native/SERVER_CONTRACT.md).
+
+**Modules.** Optional product slices are declared under
+`config/foundation/modules/` and composed at generation time with
+`bin/foundation-modules`. Unselected modules are deleted from the tree
+(paths, schema tables, routes, nav, seeds, jobs) rather than disabled at
+runtime. `Foundation.module_available?` reports what remains. Core accounts,
+organizations, billing, admin, reauthentication, MD3, native shell, and
+deploy wiring are always present. See [`docs/MODULES.md`](docs/MODULES.md).
+
+**Guest-first storefront** (module, included by default). A catalog, cart,
+and checkout that require no account: checkout collects and validates an
+email, caps quantity, and shows Terms and Privacy links. Amounts are always
+computed server-side from product prices. Fulfillment happens only through
+the verified Stripe webhook, which checks signature, session, client
 reference, amount, and currency idempotently. Receipts are reachable by the
 owning user or through a signed 24-hour token. Admin adds product CRUD with
 validated image uploads and a bounded CSV import. The module is digital-only
-by design. See [`docs/STOREFRONT.md`](docs/STOREFRONT.md).
+by design. While included it still respects the runtime
+`storefront_enabled` flag; omit it entirely with
+`bin/foundation-modules omit storefront`. See
+[`docs/STOREFRONT.md`](docs/STOREFRONT.md).
+
+**CRM** (module, included by default). Organization-scoped contacts,
+companies, leads, opportunities, pipelines and stages, notes, tasks, tags,
+and an activity timeline. Every query is scoped server-side; probing another
+organization's id returns the same 404 as a missing id. Omit with
+`bin/foundation-modules omit crm`. See [`docs/CRM.md`](docs/CRM.md).
 
 **Hosted preview runtime.** A deploy-time flag turns the application into a
 disposable preview: local disk storage, `X-Robots-Tag: noindex` on every
@@ -115,8 +165,10 @@ Preview requires no Stripe configuration. See
 importmap audit, Brakeman, and the full test suite against a throwaway
 PostgreSQL cluster inside the image. `/healthcheck` reports database
 connectivity, pending migrations, queue liveness, storage writability, mail
-mode, and Stripe readiness without contacting Stripe. Request timeouts and
-real client IPs behind Cloudflare are configured.
+mode, Stripe readiness (without contacting Stripe), and host disk/memory
+headroom when the platform exposes those figures. The public sitemap
+refreshes on a schedule. Request timeouts and real client IPs behind
+Cloudflare are configured.
 
 ## Quickstart
 
@@ -235,13 +287,16 @@ remains MIT licensed.
 
 The production image is the standard Rails multi-stage `Dockerfile` (Thruster
 and Puma on port 80). `config/deploy.yml` and `.kamal/secrets` are the Kamal
-ship path; step-by-step operator instructions are in
+ship path — build, push, proxy, SSL, and env wired to the same runtime
+contract the app boots against. Step-by-step operator instructions are in
 [`docs/DEPLOY.md`](docs/DEPLOY.md). Provide `RAILS_MASTER_KEY` (or
 `SECRET_KEY_BASE`), `DATABASE_URL`, cloud object storage via
 `ACTIVE_STORAGE_SERVICE`, and your domain in `config/foundation.yml`.
 `docker build .` produces the same image for Kamal or any container host.
 Asset precompilation needs no secrets (`SECRET_KEY_BASE_DUMMY=1` at build
-time). Point monitoring at `/healthcheck`.
+time). Point monitoring at `/healthcheck` (and `/up`); both probe paths are
+excluded from host authorization and from the HTTPS redirect so load
+balancers can reach them by internal name.
 
 Self-host and hosted preview are different runtimes: do not set
 `VELA_HOLODEX_PREVIEW` on a real deploy. Preview is documented in
@@ -252,6 +307,8 @@ let it half-work. With the storefront enabled, real Stripe keys must be
 present and `storefront_commerce_legal_reviewed` in `config/foundation.yml`
 must be flipped to `true` — a deliberate "yes, this shop is ready to take
 money" acknowledgement. Previews are exempt and need no Stripe keys at all.
+A third readiness check flags an unstamped placeholder domain, which would
+otherwise refuse every request with an opaque 403 under host authorization.
 
 ### Environment
 
@@ -317,7 +374,9 @@ Useful to know before you point it at real users, and short enough to read:
 |---|---|
 | Accounts, organizations, memberships | signup and invitations |
 | Device sessions and login events | authentication, pruned after 12 months |
-| Orders and uploaded product images | the storefront module |
+| Reauthentication rate-limit rows | step-up challenges, swept on a schedule |
+| Orders and uploaded product images | the storefront module (when included) |
+| CRM contacts, companies, leads, opportunities, tasks | the CRM module (when included) |
 | Customer and subscription records | Pay's local mirror of Stripe |
 
 Cookies are first-party only: session and device. Nothing is sent to an
