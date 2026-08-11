@@ -18,23 +18,44 @@ New applications are generated from it, stamped with an identity, and then
 built on. Every file here is copied into the generated application, so there
 is no hidden runtime, no vendor SDK, and nothing to license.
 
+It is deliberately close to stock Rails. The framework-specific surface is one
+`Foundation` namespace, one `config/foundation.yml`, and a `foundation--*`
+Stimulus prefix; everything else is Rails 8.1 as it ships.
+
+**Stack.** Rails 8.1 on Ruby 4.0 and PostgreSQL. Propshaft, import maps, and
+Hotwire — no Node build step, no bundler for JavaScript. Solid Queue, Solid
+Cache, and Solid Cable run on the same database by default, so a small
+deployment is one app container and one database; separate `*_DATABASE_URL`
+values split them apart when it grows. Puma behind Thruster. Tailwind CSS v4
+compiled against Material Design 3 tokens. Devise, OmniAuth, Pay, and Madmin
+carry authentication, OAuth, billing, and admin. All dependencies are
+permissively licensed gems from rubygems.org.
+
+**Configuration is a boot-time snapshot.** `Foundation::RuntimeConfig` reads
+and validates the deploy environment once at startup and freezes it, so
+request data and later `ENV` mutation can never become URL, mail, payment, or
+storage configuration. Invalid settings fail the boot instead of surfacing as
+a bad link in a password-reset email. In production the app's public host is
+pinned to its configured domain, which is what stops an injected `APP_HOST`
+from moving payment return URLs or emailed links somewhere else.
+
 ## What the foundation provides
 
-**Accounts and legal assent.** Devise email/password authentication with
-required email confirmation, lockout after repeated failures, and a
-12-character password minimum. Cloudflare Turnstile guards registration and
-password reset when its keys are present; disposable email domains are
-rejected. Signup requires an explicit checkbox assent and stores the accepted
-Terms and Privacy versions with a timestamp, request IP, and user agent.
-Versioned documents live at `/legal/terms` and `/legal/privacy`.
+**Accounts.** Devise email/password authentication with required email
+confirmation, lockout after repeated failures, and a 12-character password
+minimum. Cloudflare Turnstile guards registration and password reset when its
+keys are present; disposable email domains are rejected. Signup records which
+version of the Terms and Privacy pages the user accepted — useful whenever
+those documents change. The pages themselves are plain Markdown at
+`/legal/terms` and `/legal/privacy`; edit or delete them freely.
 
 **OAuth with safe linking.** Google and GitHub sign-in with CSRF-protected
 request phases. Identities are stored per provider and uid. An OAuth sign-in
 whose email matches an existing local account is never auto-merged — the
 person is asked to sign in with their existing credentials and link the
 provider explicitly from their settings. Unlinking is refused when it would
-leave an account with no way to sign in. First-time OAuth users record legal
-assent on an interstitial before any account is created.
+leave an account with no way to sign in. First-time OAuth users pass through
+a short interstitial before any account row is written.
 
 **Organizations, roles, and invitations.** Every signup creates a personal
 organization unless it arrives through an invitation. Users create additional
@@ -209,6 +230,12 @@ produces a deployable image for Kamal or any container host. Asset
 precompilation needs no secrets (`SECRET_KEY_BASE_DUMMY=1` is used at build
 time). Point monitoring at `/healthcheck`.
 
+Two boot-time checks will stop a misconfigured production deploy rather than
+let it half-work. With the storefront enabled, real Stripe keys must be
+present and `storefront_commerce_legal_reviewed` in `config/foundation.yml`
+must be flipped to `true` — a deliberate "yes, this shop is ready to take
+money" acknowledgement. Previews are exempt and need no Stripe keys at all.
+
 ### Environment
 
 | Variable | Required | Purpose |
@@ -265,54 +292,23 @@ confirmation mail while keeping the rest of preview behavior. A preview needs
 no Stripe keys at all; `STOREFRONT_PREVIEW_PAYMENT_MODE=stripe` is an
 explicit opt-in to Stripe test mode, and live mode is refused.
 
-## Generated applications and publication
+## What it stores
 
-Applications are generated from this template by a separate service; that
-service is not part of this repository and this repository contains no
-publishing, deploy, or repository-visibility code.
+Useful to know before you point it at real users, and short enough to read:
 
-A generated application's repository is created **private**. It stays private
-until an operator explicitly enables publication for it — there is no
-automatic or scheduled step that makes a generated application, its source,
-or its preview public. Treat a preview URL as unlisted rather than secret:
-preview responses carry `X-Robots-Tag: noindex`, which keeps them out of
-search results but is not an access control.
+| Data | Where it comes from |
+|---|---|
+| Accounts, organizations, memberships | signup and invitations |
+| Device sessions and login events | authentication, pruned after 12 months |
+| Orders and uploaded product images | the storefront module |
+| Customer and subscription records | Pay's local mirror of Stripe |
 
-Nothing about publication changes the launch requirements below. A private
-repository and an unindexed preview do not substitute for the legal review,
-Stripe configuration, and storage setup a real deployment needs.
-
-## Legal review checklist
-
-The Terms of Service and Privacy Policy shipped here were written for this
-template as a **starting point, not legal advice**. They are not reviewed for
-your jurisdiction, your business model, or your data practices. Before
-accepting a real signup or a real payment:
-
-- [ ] Search both documents for `TODO-OPERATOR` and replace every marker:
-      operator identity, governing law, refund terms, lawful bases, processor
-      list, international transfers, and contact mailboxes.
-- [ ] Have qualified counsel review the result for your jurisdiction and
-      sector, including consumer, distance-selling, and minimum-age rules.
-- [ ] Confirm the version identifiers and "last updated" dates are correct;
-      assent records store the version a user accepted, so a substantive
-      change means a new version.
-- [ ] Reconcile the Privacy Policy with what the application actually stores:
-      accounts, organizations, orders, uploaded images, device sessions and
-      login events (retained 12 months by default), and Stripe's records.
-- [ ] Review cookie and analytics language against anything you add; the
-      foundation sets only first-party session and device cookies.
-- [ ] Confirm the support and legal mailboxes in `config/foundation.yml` are
-      monitored, and that they can receive data-subject requests.
-- [ ] For the storefront: complete the commerce checklist in
-      [`docs/STOREFRONT.md`](docs/STOREFRONT.md) and then set
-      `storefront_commerce_legal_reviewed: true`. Production readiness fails
-      until you do. The module is digital-only — selling physical goods
-      requires address collection, shipping, tax, and matching terms that are
-      not implemented here.
-- [ ] Verify the Terms and Privacy links still render on signup, checkout,
-      the OAuth assent step, and the public footer. Tests assert this; keep
-      them.
+Cookies are first-party only: session and device. Nothing is sent to an
+analytics or tracking service, and there is no third-party JavaScript — the
+Material Symbols font is subset and served locally, so no CDN sees your
+users. Placeholder Terms and Privacy pages ship at `/legal/*` with
+`TODO-OPERATOR` markers; fill them in, replace them, or remove them and their
+routes if your app doesn't need them.
 
 ## Administration
 
