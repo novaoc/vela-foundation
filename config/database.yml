@@ -85,20 +85,30 @@ test:
 # for a full overview on how database connection configuration can be specified.
 #
 production:
-  primary: &primary_production
+  primary:
     <<: *default
+<% if ENV["DATABASE_URL"].present? %>
+    url: <%= ENV["DATABASE_URL"] %>
+<% else %>
     database: vela_foundation_production
     username: vela_foundation
     password: <%= ENV["VELA_FOUNDATION_DATABASE_PASSWORD"] %>
+<% end %>
+<% if ENV["CACHE_DATABASE_URL"].present? %>
   cache:
-    <<: *primary_production
-    database: vela_foundation_production_cache
+    <<: *default
+    url: <%= ENV["CACHE_DATABASE_URL"] %>
     migrations_paths: db/cache_migrate
+<% end %>
+<% if ENV["QUEUE_DATABASE_URL"].present? %>
   queue:
-    <<: *primary_production
-    database: vela_foundation_production_queue
+    <<: *default
+    url: <%= ENV["QUEUE_DATABASE_URL"] %>
     migrations_paths: db/queue_migrate
+<% end %>
+<% if ENV["CABLE_DATABASE_URL"].present? %>
   cable:
-    <<: *primary_production
-    database: vela_foundation_production_cable
+    <<: *default
+    url: <%= ENV["CABLE_DATABASE_URL"] %>
     migrations_paths: db/cable_migrate
+<% end %>

@@ -1,6 +1,9 @@
 require_relative "boot"
 
 require "rails/all"
+require_relative "../lib/foundation/runtime_config"
+require_relative "../lib/foundation"
+require_relative "../lib/foundation/noindex_middleware"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -19,6 +22,15 @@ module VelaFoundation
     # Product identity and foundation-wide settings (config/foundation.yml),
     # readable with string or symbol keys as Rails.configuration.x.foundation.
     config.x.foundation = config_for(:foundation).with_indifferent_access
+    config.x.runtime_config = Foundation::RuntimeConfig.new(
+      environment: ENV,
+      foundation: config.x.foundation,
+      rails_environment: Rails.env
+    )
+
+    # This wrapper sits outside ActionDispatch::Static and exception handling,
+    # so every Rails-controlled hosted-preview response receives noindex.
+    config.middleware.insert_before 0, Foundation::NoindexMiddleware
 
     # Storefront uploads are ordinary admin-only multipart fields. Disable
     # Active Storage's generic public/direct-upload routes; catalog images are

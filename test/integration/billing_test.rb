@@ -36,6 +36,7 @@ class BillingTest < ActionDispatch::IntegrationTest
   end
 
   test "checkout uses the selected configured Stripe price" do
+    host! "attacker.invalid"
     sign_in_and_switch(@owner)
     captured = nil
     checkout = lambda do |**arguments|
@@ -51,6 +52,9 @@ class BillingTest < ActionDispatch::IntegrationTest
     assert_redirected_to "https://checkout.stripe.test/session_stub"
     assert_equal @organization, captured[:organization]
     assert_equal "price_pro_yearly", captured[:price_id]
+    assert_equal "https://example.com/billing?checkout=success", captured[:success_url]
+    assert_equal "https://example.com/pricing?interval=year", captured[:cancel_url]
+    assert_no_match(/attacker\.invalid/, captured.values.join(" "))
   end
 
   test "checkout rejects free, unknown, and manually controlled plans" do
@@ -91,9 +95,9 @@ class BillingTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?]", billing_portal_path
     assert_select "a", text: "Compare plans", count: 0
 
-    portal_organization = nil
+    portal_arguments = nil
     portal = lambda do |**arguments|
-      portal_organization = arguments[:organization]
+      portal_arguments = arguments
       "https://billing.stripe.test/portal_stub"
     end
     with_stubbed_singleton_method(Foundation::BillingGateway, :portal_url, portal) do
@@ -101,7 +105,8 @@ class BillingTest < ActionDispatch::IntegrationTest
     end
     assert_response :see_other
     assert_redirected_to "https://billing.stripe.test/portal_stub"
-    assert_equal @organization, portal_organization
+    assert_equal @organization, portal_arguments[:organization]
+    assert_equal "https://example.com/billing", portal_arguments[:return_url]
   end
 
   private

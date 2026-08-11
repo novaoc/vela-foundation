@@ -2,5 +2,5 @@
 <p>Order <strong><%= @order.public_reference %></strong> has been fulfilled.</p>
 <ul><% @order.line_items.each do |item| %><li><%= item.name %> × <%= item.quantity %> — <%= storefront_money(item.line_total_cents, item.currency) %></li><% end %></ul>
 <p><strong>Total: <%= storefront_money(@order.total_cents, @order.currency) %></strong></p>
-<p><%= link_to "View your receipt", storefront_order_url(@order.public_reference, access_token: @token, host: Rails.configuration.x.foundation[:domain], protocol: "https") %>. This private link expires 24 hours after this receipt was issued.</p>
-<p><%= link_to "Terms of Service", legal_terms_url(host: Rails.configuration.x.foundation[:domain], protocol: "https") %> · <%= link_to "Privacy Policy", legal_privacy_url(host: Rails.configuration.x.foundation[:domain], protocol: "https") %></p>
+<p><%= link_to "View your receipt", storefront_order_url(@order.public_reference, access_token: @token) %>. This private link expires 24 hours after this receipt was issued.</p>
+<p><%= link_to "Terms of Service", legal_terms_url %> · <%= link_to "Privacy Policy", legal_privacy_url %></p>

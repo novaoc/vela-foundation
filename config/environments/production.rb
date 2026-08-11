@@ -1,6 +1,8 @@
 require "active_support/core_ext/integer/time"
 
 Rails.application.configure do
+  runtime_config = Rails.application.config.x.runtime_config
+
   # Settings specified here will take precedence over those in config/application.rb.
 
   # Code is not reloaded between requests.
@@ -21,8 +23,10 @@ Rails.application.configure do
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"
 
-  # Store uploaded files on the local file system (see config/storage.yml for options).
-  config.active_storage.service = :local
+  # Hosted previews are deliberately local. A real production deploy names
+  # its cloud service with ACTIVE_STORAGE_SERVICE; readiness rejects the
+  # secret-free local fallback before traffic is accepted.
+  config.active_storage.service = runtime_config.active_storage_service
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
   config.assume_ssl = true
@@ -55,24 +59,17 @@ Rails.application.configure do
 
   # Replace the default in-process and non-durable queuing backend for Active Job.
   config.active_job.queue_adapter = :solid_queue
-  config.solid_queue.connects_to = { database: { writing: :queue } }
+  config.solid_queue.connects_to = {
+    database: { writing: runtime_config.database_role(:queue) }
+  }
 
-  # Ignore bad email addresses and do not raise email delivery errors.
-  # Set this to true and configure the email server for immediate delivery to raise delivery errors.
-  # config.action_mailer.raise_delivery_errors = false
-
-  # Set host to be used by links generated in mailer templates (confirmation,
-  # password reset, unlock) to the canonical domain from config/foundation.yml.
-  config.action_mailer.default_url_options = { host: Rails.application.config.x.foundation[:domain] }
-
-  # Specify outgoing SMTP server. Remember to add smtp/* credentials via bin/rails credentials:edit.
-  # config.action_mailer.smtp_settings = {
-  #   user_name: Rails.application.credentials.dig(:smtp, :user_name),
-  #   password: Rails.application.credentials.dig(:smtp, :password),
-  #   address: "smtp.example.com",
-  #   port: 587,
-  #   authentication: :plain
-  # }
+  # The generated application's explicit provider is SMTP. Deploy-time SMTP
+  # settings take priority; an offline hosted preview switches to the in-memory
+  # test adapter. Every other mode surfaces delivery failures.
+  config.action_mailer.delivery_method = runtime_config.mail_delivery_method(provider: :smtp)
+  config.action_mailer.smtp_settings = runtime_config.smtp_settings if runtime_config.smtp?
+  config.action_mailer.raise_delivery_errors = runtime_config.raise_delivery_errors?
+  config.action_mailer.default_url_options = runtime_config.url_options
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).

@@ -5,14 +5,17 @@ Version 1.0 — 2026-08-10.
 This document is the sole bridge between Vela's product requirements and the
 implementation. It describes BEHAVIOR and acceptance criteria. Implementers
 work from this spec plus public documentation only (Rails guides, gem
-READMEs, Google's Material Design 3 spec, Stripe docs). Implementers MUST
-NOT read, excerpt, or consult `/Users/wren/nova/vela-rails`,
-`/Users/wren/nova/railsfast-base-main`, or
-`/Users/wren/nova/pokemon-card-social-store`, or any RailsFast material.
+READMEs, Google's Material Design 3 spec, Stripe docs) and from no other
+source. The binding development protocol, including the excluded-source
+list, is maintained outside this repository so that no third-party name
+ships inside a generated application; see `CLEANROOM_PROTOCOL.md` in the
+build workspace.
 
-The repository is a **starter template**: Vela's `create_rails_app` clones
-it to create each new public, forkable application. Everything here ships
-under a real MIT license.
+The repository is a **starter template**: Vela's `create_rails_app`
+generates each new application from it. Everything here ships under a real
+MIT license, and every file in this repository is copied into generated
+applications — so no file here may contain a third-party product name,
+brand, or attribution.
 
 ## Global conventions
 
@@ -30,9 +33,12 @@ under a real MIT license.
   RuboCop zero offenses, Brakeman zero warnings, bundler-audit clean,
   importmap audit clean, full test suite passing inside the Docker `test`
   stage (below).
-- No emoji or flag glyphs in UI. Icons are exclusively Material Symbols
-  Rounded. Never any Heroicons/Famicons dependency or asset.
-- All gems must be MIT/Apache-2.0/BSD licensed, from rubygems.org.
+- No emoji or flag glyphs in UI. Icons come exclusively from the locally
+  subset Material Symbols Rounded font: no other icon library, icon gem,
+  icon font, or SVG icon pack may be added as a dependency or asset.
+- All gems must carry a permissive license — MIT, Apache-2.0, BSD-2/3, or
+  ISC — and come from rubygems.org. (ISC is included because it is the
+  BSD-2-equivalent license used by `rails_cloudflare_turnstile`.)
 
 ## M1 — Production base and gates
 
@@ -288,9 +294,12 @@ Feature-flagged by `foundation.yml` (`storefront_enabled`).
 ## Verification gates (run for every milestone)
 
 1. Docker `test` stage green (M1.1).
-2. Similarity guard (`/Users/wren/nova/vela-simguard/`) reports zero
-   non-null-model matches against the reference corpus.
-3. Brand scan: no railsfast/heroicon/famicon/RailsFast strings.
-4. Gemfile diff review: all new gems MIT/Apache/BSD.
+2. Similarity guard reports zero non-null-model matches against the
+   reference corpus (tooling and corpus live outside this repository; see
+   the build workspace protocol).
+3. Brand scan: the excluded-name list from the build protocol returns no
+   hits anywhere in this repository, including documentation.
+4. Gemfile diff review: every new gem carries a permissive license per the
+   Global conventions.
 5. Provenance log entry in `PROVENANCE.md`: date, milestone, implementer
    (agent/session), inputs used.

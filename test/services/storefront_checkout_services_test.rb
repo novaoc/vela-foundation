@@ -288,27 +288,24 @@ class StorefrontCheckoutServicesTest < ActiveSupport::TestCase
     end
   end
 
-  test "checkout origin rejects plaintext paths and off-domain production hosts" do
-    assert_raises(RuntimeError) do
-      Foundation::Storefront::StripeCheckoutSession.base_url(
-        environment: { "APP_HOST" => "http://example.com" }, strict: true
-      )
+  test "checkout origin comes only from validated runtime configuration" do
+    assert_raises(Foundation::RuntimeConfig::Invalid) do
+      runtime_config({ "APP_HOST" => "http://example.com" }, rails_environment: :production)
     end
-    assert_raises(RuntimeError) do
-      Foundation::Storefront::StripeCheckoutSession.base_url(
-        environment: { "APP_HOST" => "https://evil.example/path" }, strict: true
-      )
+    assert_raises(Foundation::RuntimeConfig::Invalid) do
+      runtime_config({ "APP_HOST" => "https://evil.example/path" }, rails_environment: :production)
     end
-    assert_raises(RuntimeError) do
-      Foundation::Storefront::StripeCheckoutSession.base_url(
-        environment: { "APP_HOST" => "https://other.example" }, strict: true
-      )
+    # A Stripe return URL can never be moved off the product's own domain.
+    assert_raises(Foundation::RuntimeConfig::Invalid) do
+      runtime_config({ "APP_HOST" => "https://other.example" }, rails_environment: :production)
     end
+    assert_equal "https://example.com",
+      Foundation::Storefront::StripeCheckoutSession.base_url(
+        runtime_config: runtime_config({ "APP_HOST" => "https://example.com" }, rails_environment: :production)
+      )
+    preview = runtime_config({ "APP_HOST" => "preview.holodex.test", "VELA_HOLODEX_PREVIEW" => "1" })
     assert_equal "https://preview.holodex.test",
-      Foundation::Storefront::StripeCheckoutSession.base_url(
-        environment: { "APP_HOST" => "https://preview.holodex.test", "VELA_HOLODEX_PREVIEW" => "1" },
-        strict: true
-      )
+      Foundation::Storefront::StripeCheckoutSession.base_url(runtime_config: preview)
   end
 
   test "settlement readiness bypasses disabled launch placeholders but requires keys" do
@@ -328,6 +325,14 @@ class StorefrontCheckoutServicesTest < ActiveSupport::TestCase
   end
 
   private
+
+  def runtime_config(environment, rails_environment: :test)
+    Foundation::RuntimeConfig.new(
+      environment: environment,
+      foundation: Rails.configuration.x.foundation,
+      rails_environment: rails_environment
+    )
+  end
 
   def bind_session!
     @order.update!(stripe_session_id: "cs_test_order", checkout_started_at: Time.current)

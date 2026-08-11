@@ -12,5 +12,5 @@ test:
   <<: *default
 
 production:
-  database: cache
+  database: <%= ENV["CACHE_DATABASE_URL"].present? ? "cache" : "primary" %>
   <<: *default

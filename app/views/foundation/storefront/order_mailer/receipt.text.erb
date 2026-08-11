@@ -7,7 +7,7 @@ Order <%= @order.public_reference %> has been fulfilled.
 Total: <%= storefront_money(@order.total_cents, @order.currency) %>
 
 View your receipt (private link, expires 24 hours after this receipt was issued):
-<%= storefront_order_url(@order.public_reference, access_token: @token, host: Rails.configuration.x.foundation[:domain], protocol: "https") %>
+<%= storefront_order_url(@order.public_reference, access_token: @token) %>
 
-Terms: <%= legal_terms_url(host: Rails.configuration.x.foundation[:domain], protocol: "https") %>
-Privacy: <%= legal_privacy_url(host: Rails.configuration.x.foundation[:domain], protocol: "https") %>
+Terms: <%= legal_terms_url %>
+Privacy: <%= legal_privacy_url %>

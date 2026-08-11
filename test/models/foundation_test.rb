@@ -31,9 +31,11 @@ class FoundationTest < ActiveSupport::TestCase
     end
   end
 
-  test "offline_preview? requires the exact flag value 1" do
-    with_env("VELA_HOLODEX_PREVIEW" => "true", "SMTP_ADDRESS" => nil) do
-      assert_not Foundation.offline_preview?
+  test "offline_preview? rejects a malformed preview flag" do
+    assert_raises Foundation::RuntimeConfig::Invalid do
+      with_env("VELA_HOLODEX_PREVIEW" => "true", "SMTP_ADDRESS" => nil) do
+        flunk "a malformed flag must prevent the runtime snapshot"
+      end
     end
   end
 end

@@ -127,6 +127,44 @@ for Kamal or any container host. Asset precompilation needs no secrets
 (`SECRET_KEY_BASE_DUMMY=1` is used at build time). Point your monitoring at
 `/healthcheck`.
 
+The default runtime needs only one `DATABASE_URL`. Solid Queue, Solid Cache,
+and Solid Cable share that primary database, and their tables are installed by
+the primary migration stream. A larger deployment may independently provide
+`QUEUE_DATABASE_URL`, `CACHE_DATABASE_URL`, or `CABLE_DATABASE_URL`; only the
+named adapters with an override move away from primary. Run a separate
+`bin/jobs` process by default. Setting `SOLID_QUEUE_IN_PUMA=1` runs the queue
+supervisor inside Puma for a single-server deployment; `0` disables it and any
+other value refuses to boot.
+
+Set `APP_HOST` to the public bare host or absolute origin used by every emailed
+link, controller-generated absolute URL, and Stripe return URL. Paths, queries,
+fragments, credentials, and control characters are rejected, and request `Host`
+headers are never used as the canonical origin. Links are HTTPS unless the host
+is loopback (`localhost`, `*.localhost`, `127.0.0.0/8`, `::1`, `0.0.0.0`);
+preview and production require HTTPS outright. In production outside preview,
+`APP_HOST` must be the `domain` from `config/foundation.yml` or a subdomain of
+it, so an injected value cannot move payment or mail links off your domain.
+
+Without `APP_HOST`, deployed environments use that same `domain`. Local
+`bin/rails server` development instead defaults to `http://localhost:3000` so
+confirmation and password-reset links stay on your machine; set `APP_HOST` when
+you want development to generate a real hostname.
+
+Provider-neutral mail configuration uses `SMTP_ADDRESS`, `SMTP_PORT` (587 by
+default), optional paired `SMTP_USERNAME` / `SMTP_PASSWORD`, exact
+`SMTP_ENABLE_STARTTLS_AUTO=true|false`, and `MAILER_FROM`. SMTP wins when it is
+present. Without SMTP, hosted preview uses the in-memory adapter; otherwise the
+application's explicit production provider remains active. `MAILER_FROM` must
+be one mailbox, such as `Product <noreply@example.com>`; both From and Reply-To
+are forced to that same application identity. Delivery failures are raised in
+every mode except the offline in-memory preview.
+
+Outside hosted preview, set `ACTIVE_STORAGE_SERVICE` to a non-disk service
+defined in `config/storage.yml`. A production boot stays secret-free for asset
+compilation, but `/healthcheck` rejects the local fallback until cloud storage
+is configured and writable. See [`docs/HOSTED_RUNTIME.md`](docs/HOSTED_RUNTIME.md)
+for the complete environment, preview, health, and deployment contract.
+
 ## Billing setup
 
 Plans, presentation prices, Stripe Price IDs, and entitlements live together
@@ -183,7 +221,11 @@ repository.
 `VELA_HOLODEX_PREVIEW=1` defaults to a conspicuous local simulator with no
 Stripe call and no payment fields. An injected preview can opt into real
 Stripe test mode only with `STOREFRONT_PREVIEW_PAYMENT_MODE=stripe`, test keys,
-and a signing secret. Live Stripe mode is rejected in preview.
+and a signing secret. Live Stripe mode is rejected in preview. Offline preview
+also stores uploads locally, sends `X-Robots-Tag: noindex` on normal, health,
+and error responses, keeps mail in memory, and auto-confirms new accounts.
+Supplying `SMTP_ADDRESS` keeps the preview noindex/simulator/storage behavior
+but restores ordinary Devise confirmation mail.
 
 This M8 module is intentionally digital-only
 (`storefront_fulfillment_mode: digital`): inventory means limited licenses or

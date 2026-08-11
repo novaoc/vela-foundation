@@ -6,7 +6,8 @@ require "devise/orm/active_record"
 Devise.setup do |config|
   # Auth mail (confirmation, reset, unlock) comes from the operator support
   # mailbox defined in config/foundation.yml.
-  config.mailer_sender = Rails.configuration.x.foundation[:support_email]
+  config.mailer_sender = Foundation.runtime_config.mailer_from
+  config.parent_mailer = "ApplicationMailer"
 
   # Emails are matched case-insensitively and with surrounding whitespace
   # stripped, so "  Jane@Example.COM " signs in as jane@example.com.

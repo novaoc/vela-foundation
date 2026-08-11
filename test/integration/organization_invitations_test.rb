@@ -45,7 +45,7 @@ class OrganizationInvitationsTest < ActionDispatch::IntegrationTest
     assert_equal [ "guest@example.com" ], mail.to
 
     body = mail.text_part.body.to_s
-    link = body[%r{http://[^/\s]+(/invitations/mail/\S+)}, 1]
+    link = body[%r{https://[^/\s]+(/invitations/mail/\S+)}, 1]
     assert link, "expected the mail to carry a signed invitation link"
     assert_no_match(/#{Regexp.escape(invitation.token)}/, link,
       "the emailed link must carry the signed token, not the raw one")

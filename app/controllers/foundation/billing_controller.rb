@@ -33,7 +33,10 @@ class Foundation::BillingController < ApplicationController
       return redirect_to billing_path, alert: "There is no active subscription to manage."
     end
 
-    url = Foundation::BillingGateway.portal_url(organization: @organization, return_url: billing_url)
+    url = Foundation::BillingGateway.portal_url(
+      organization: @organization,
+      return_url: billing_url
+    )
     redirect_to url, allow_other_host: true, status: :see_other
   end
 

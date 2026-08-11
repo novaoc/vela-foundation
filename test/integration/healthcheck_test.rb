@@ -13,6 +13,11 @@ class HealthcheckTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Database is reachable and answers queries"
     assert_includes response.body, "Database migrations are all applied"
     assert_includes response.body, "Job queue is live"
-    assert_includes response.body, "Disk-backed storage is writable"
+    assert_includes response.body, "Configured storage is writable"
+    assert_includes response.body, "Hosted preview is inactive"
+    assert_includes response.body, "Mail mode: test application provider"
+    assert_includes response.body, "Storage mode: test disk"
+    assert_includes response.body, "Storefront simulator is inactive"
+    assert_includes response.body, "Solid Queue runs external worker"
   end
 end

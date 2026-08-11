@@ -40,10 +40,19 @@ module ActiveSupport
     # and mail-selection matrices.
     def with_env(entries)
       previous = entries.keys.index_with { |key| ENV[key] }
+      previous_runtime = Foundation.runtime_config
       entries.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
+      if (entries.keys & Foundation::RuntimeConfig::RUNTIME_ENV_KEYS).any?
+        Rails.configuration.x.runtime_config = Foundation::RuntimeConfig.new(
+          environment: ENV,
+          foundation: Rails.configuration.x.foundation,
+          rails_environment: Rails.env
+        )
+      end
       yield
     ensure
       previous.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
+      Rails.configuration.x.runtime_config = previous_runtime if previous_runtime
     end
 
     # Minitest 6 no longer bundles Object#stub. Keep network-bound tests

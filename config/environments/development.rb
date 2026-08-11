@@ -1,6 +1,8 @@
 require "active_support/core_ext/integer/time"
 
 Rails.application.configure do
+  runtime_config = Rails.application.config.x.runtime_config
+
   # Settings specified here will take precedence over those in config/application.rb.
 
   # Make code changes take effect immediately without server restart.
@@ -29,16 +31,21 @@ Rails.application.configure do
   config.cache_store = :memory_store
 
   # Store uploaded files on the local file system (see config/storage.yml for options).
-  config.active_storage.service = :local
+  config.active_storage.service = runtime_config.active_storage_service
 
-  # Don't care if the mailer can't send.
-  config.action_mailer.raise_delivery_errors = false
+  # Use deploy-time SMTP when present and surface delivery failures during
+  # development instead of silently losing mail.
+  config.action_mailer.delivery_method = runtime_config.mail_delivery_method(provider: :smtp)
+  config.action_mailer.smtp_settings = runtime_config.smtp_settings if runtime_config.smtp?
+  config.action_mailer.raise_delivery_errors = runtime_config.raise_delivery_errors?
 
   # Make template changes take effect immediately.
   config.action_mailer.perform_caching = false
 
-  # Set localhost to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
+  # The same validated canonical origin production mail uses. Without an
+  # APP_HOST this resolves to http://localhost:3000, so a confirmation or
+  # password-reset link clicked here stays on this machine.
+  config.action_mailer.default_url_options = runtime_config.url_options
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log

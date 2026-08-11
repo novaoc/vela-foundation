@@ -17,6 +17,14 @@ class ApplicationController < ActionController::Base
   # organizations gem, which validates membership on every resolution.
   before_action :assign_current_attributes
 
+  # Absolute URLs generated in a controller or view come from the validated
+  # boot snapshot, exactly like mailer links. A spoofed or unexpected request
+  # Host therefore cannot appear in a payment return URL, a redirect, or any
+  # other link this application hands out.
+  def default_url_options
+    Foundation.runtime_config.url_options
+  end
+
   private
 
   def assign_current_attributes

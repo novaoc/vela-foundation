@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "uri"
-
 module Foundation
   module Storefront
     class StripeCheckoutSession
@@ -65,25 +63,8 @@ module Foundation
       end
       private_class_method :session_attributes
 
-      def self.base_url(environment: ENV, strict: !Rails.env.development? && !Rails.env.test?)
-        configured = environment["APP_HOST"].presence
-        candidate = configured || "https://#{Rails.configuration.x.foundation[:domain]}"
-        candidate = "https://#{candidate}" unless candidate.match?(%r{\Ahttps?://})
-        uri = URI.parse(candidate)
-        origin_only = [ "", "/" ].include?(uri.path.to_s) && uri.query.nil? && uri.fragment.nil?
-        raise "APP_HOST must be an absolute HTTP(S) origin without credentials or path" unless %w[http https].include?(uri.scheme) && uri.host.present? && uri.userinfo.blank? && origin_only
-
-        strict ||= environment["VELA_HOLODEX_PREVIEW"] == "1"
-        raise "APP_HOST must use HTTPS" if strict && uri.scheme != "https"
-        raise "APP_HOST must use the default HTTPS port" if strict && uri.port != 443
-        canonical = Rails.configuration.x.foundation[:domain].to_s.downcase
-        if strict && environment["VELA_HOLODEX_PREVIEW"] != "1" && uri.host.downcase != canonical
-          raise "APP_HOST must match the configured foundation domain"
-        end
-
-        "#{uri.scheme}://#{uri.host}#{":#{uri.port}" unless [ 80, 443 ].include?(uri.port)}"
-      rescue URI::InvalidURIError
-        raise "APP_HOST must be an absolute HTTP(S) origin without credentials or path"
+      def self.base_url(runtime_config: Foundation.runtime_config)
+        runtime_config.canonical_origin
       end
 
       def self.safely_close_failed_checkout(order, remote_session, gateway)

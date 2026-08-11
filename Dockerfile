@@ -78,6 +78,15 @@ RUN apt-get update -qq && \
 # root (peer auth), so no credentials are baked into the image.
 RUN service postgresql start && \
     su postgres -c "createuser --superuser root" && \
+    su postgres -c "createdb --owner=root vela_foundation_runtime_test" && \
+    DATABASE_URL="postgresql:///vela_foundation_runtime_test" \
+      RAILS_ENV=production SECRET_KEY_BASE="foundation-runtime-test-secret" \
+      APP_HOST="https://foundation-runtime.test" VELA_HOLODEX_PREVIEW="1" \
+      ./bin/rails db:prepare && \
+    DATABASE_URL="postgresql:///vela_foundation_runtime_test" \
+      RAILS_ENV=production SECRET_KEY_BASE="foundation-runtime-test-secret" \
+      APP_HOST="https://foundation-runtime.test" VELA_HOLODEX_PREVIEW="1" \
+      ./bin/rails runner script/verify_single_database.rb && \
     ./bin/rails db:prepare && \
     ./bin/rubocop && \
     ./bin/bundler-audit check --update && \
