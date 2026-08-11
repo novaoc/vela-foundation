@@ -23,7 +23,7 @@
       </p>
     <% end %>
     <%= button_to "Accept invitation", accept_invitation_path(@invitation.token),
-          class: "mt-4 rounded-md bg-md-primary px-4 py-2.5 font-medium text-md-on-primary hover:bg-md-primary" %>
+          class: "mt-4 md-button md-button--filled" %>
     <% if @invitation.expires_at %>
       <p class="mt-4 text-sm text-md-on-surface-variant">
         This invitation expires on <%= @invitation.expires_at.to_date.to_fs(:long) %>.

@@ -118,14 +118,18 @@ class AdminAccessTest < ActionDispatch::IntegrationTest
     assert_no_secret("SESSION-SECRET-M6", session_row.token_digest, "ADOPTION-SECRET-M6")
   end
 
-  test "dashboard links the enabled M8 storefront admin" do
+  test "dashboard links the enabled storefront admin from nav and body" do
     sign_in_as(@admin)
     get "/admin/dashboard"
 
     assert_response :success
     assert_select "h2", text: "Storefront administration"
-    assert_select "a[href='#{storefront_admin_products_path}']", count: 1
-    assert_select "a[href='#{storefront_admin_orders_path}']", count: 1
+    # Once in the shared nav, once in the dashboard body copy — the body link
+    # replaced a stale placeholder that claimed the storefront wasn't
+    # installed while it was live.
+    assert_select "a[href='#{storefront_admin_products_path}']", count: 2
+    assert_select "a[href='#{storefront_admin_orders_path}']", count: 2
+    assert_select "a[href='#{storefront_admin_payment_events_path}']", count: 2
     assert_not Rails.application.routes.named_routes.route_defined?(:madmin_products)
     assert_not Rails.application.routes.named_routes.route_defined?(:madmin_orders)
   end

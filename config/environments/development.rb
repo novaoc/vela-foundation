@@ -33,9 +33,11 @@ Rails.application.configure do
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = runtime_config.active_storage_service
 
-  # Use deploy-time SMTP when present and surface delivery failures during
-  # development instead of silently losing mail.
-  config.action_mailer.delivery_method = runtime_config.mail_delivery_method(provider: :smtp)
+  # Deploy-time SMTP when present (point SMTP_ADDRESS at a local catcher to
+  # exercise real delivery); otherwise the in-memory adapter. A fresh checkout
+  # has no mail server on localhost:25, and the first signup must not crash —
+  # the full message, confirmation link included, is printed to the log.
+  config.action_mailer.delivery_method = runtime_config.mail_delivery_method(provider: :test)
   config.action_mailer.smtp_settings = runtime_config.smtp_settings if runtime_config.smtp?
   config.action_mailer.raise_delivery_errors = runtime_config.raise_delivery_errors?
 
