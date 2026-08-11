@@ -10,6 +10,17 @@ module ActiveSupport
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
 
-    # Add more helper methods to be used by all tests here...
+    private
+
+    # Runs the block with the given ENV entries applied (nil deletes a key),
+    # restoring the previous values afterwards. Used by the offline-preview
+    # and mail-selection matrices.
+    def with_env(entries)
+      previous = entries.keys.index_with { |key| ENV[key] }
+      entries.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
+      yield
+    ensure
+      previous.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
+    end
   end
 end

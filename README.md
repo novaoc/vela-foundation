@@ -17,8 +17,21 @@ Current foundation (more milestones land incrementally):
   IPs behind Cloudflare (`cloudflare-rails`).
 - SEO plumbing: `meta-tags` defaults driven from `config/foundation.yml`,
   plus a `sitemap_generator` setup (`bin/rails sitemap:refresh`).
-- Coming next: accounts and legal assent, OAuth, organizations, billing,
-  admin, a Material Design 3 design system, and an optional storefront.
+- Accounts (Devise): registration, sign-in, password reset, required email
+  confirmation, lockout after repeated failures, 12-character password
+  minimum. Cloudflare Turnstile guards registration and password reset when
+  `CLOUDFLARE_TURNSTILE_SITE_KEY`/`CLOUDFLARE_TURNSTILE_SECRET_KEY` are set;
+  disposable email domains are rejected (`nondisposable`).
+- Versioned legal assent: fresh Terms of Service and Privacy Policy pages at
+  `/legal/terms` and `/legal/privacy`; signup requires an explicit checkbox
+  and stores the accepted versions with timestamp, IP, and user agent.
+  The documents are a starting point, **not legal advice** — search them for
+  `TODO-OPERATOR` and review with counsel before launch.
+- Hosted-preview affordance: when `VELA_HOLODEX_PREVIEW=1` and no
+  `SMTP_ADDRESS` is configured, new accounts are confirmed immediately
+  (previews cannot send mail); with a relay, normal confirmation applies.
+- Coming next: OAuth, organizations, billing, admin, a Material Design 3
+  design system, and an optional storefront.
 
 ## Product identity
 

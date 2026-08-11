@@ -23,9 +23,39 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <main class="container mx-auto mt-28 px-5 flex">
+  <body class="min-h-screen flex flex-col bg-white text-gray-900">
+    <header class="border-b border-gray-200">
+      <nav class="container mx-auto flex items-center justify-between gap-4 px-5 py-4" aria-label="Primary">
+        <%= link_to Rails.configuration.x.foundation[:application_name], root_path, class: "font-semibold" %>
+        <div class="flex items-center gap-4 text-sm">
+          <% if user_signed_in? %>
+            <span class="text-gray-600"><%= current_user.email %></span>
+            <%= button_to "Sign out", destroy_user_session_path, method: :delete,
+                  class: "underline underline-offset-2 hover:text-gray-600" %>
+          <% else %>
+            <%= link_to "Sign in", new_user_session_path, class: "underline underline-offset-2 hover:text-gray-600" %>
+            <%= link_to "Sign up", new_user_registration_path, class: "underline underline-offset-2 hover:text-gray-600" %>
+          <% end %>
+        </div>
+      </nav>
+    </header>
+
+    <% if notice.present? %>
+      <p role="status" class="container mx-auto mt-4 rounded-md border border-green-200 bg-green-50 px-5 py-3 text-sm text-green-900"><%= notice %></p>
+    <% end %>
+    <% if alert.present? %>
+      <p role="alert" class="container mx-auto mt-4 rounded-md border border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-900"><%= alert %></p>
+    <% end %>
+
+    <main class="container mx-auto grow px-5 py-12">
       <%= yield %>
     </main>
+
+    <footer class="border-t border-gray-200">
+      <div class="container mx-auto flex flex-wrap items-center gap-4 px-5 py-4 text-sm text-gray-600">
+        <%= link_to "Terms of Service", legal_terms_path, class: "underline underline-offset-2 hover:text-gray-900" %>
+        <%= link_to "Privacy Policy", legal_privacy_path, class: "underline underline-offset-2 hover:text-gray-900" %>
+      </div>
+    </footer>
   </body>
 </html>

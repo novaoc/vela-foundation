@@ -1,0 +1,11 @@
+# Passwords here must satisfy the 12-character minimum (config/initializers/devise.rb).
+confirmed:
+  email: confirmed@example.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, "correct horse battery") %>
+  confirmed_at: <%= Time.utc(2026, 1, 1).to_fs(:db) %>
+
+unconfirmed:
+  email: unconfirmed@example.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, "correct horse battery") %>
+  confirmation_token: fixture-confirmation-token
+  confirmation_sent_at: <%= Time.utc(2026, 1, 1).to_fs(:db) %>

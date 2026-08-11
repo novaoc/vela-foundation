@@ -54,6 +54,16 @@ gem "meta-tags"
 # Foundation: sitemap generation for search engines [https://github.com/kjvarga/sitemap_generator]
 gem "sitemap_generator"
 
+# Foundation: email/password authentication [https://github.com/heartcombo/devise]
+gem "devise"
+
+# Foundation: Cloudflare Turnstile challenge on registration and password reset
+# [https://github.com/instrumentl/rails-cloudflare-turnstile]
+gem "rails_cloudflare_turnstile"
+
+# Foundation: reject disposable email addresses at signup [https://github.com/rameerez/nondisposable]
+gem "nondisposable"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
