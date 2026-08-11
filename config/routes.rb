@@ -121,9 +121,11 @@ Rails.application.routes.draw do
   # checks are defined in config/allgood.rb.
   mount Allgood::Engine => "/healthcheck"
 
-  # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
-  # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
-  # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
+  # Web application manifest, rendered from config/foundation.yml (SPEC
+  # M10.2) and linked from the layouts. No service worker is registered: the
+  # foundation ships no offline cache, so nothing here can serve stale
+  # authenticated pages.
+  get "manifest.webmanifest", to: "foundation/pwa#manifest", as: :pwa_manifest, format: false
 
   # Minimal landing page until the M7 marketing set replaces it.
   if Foundation.storefront_enabled?

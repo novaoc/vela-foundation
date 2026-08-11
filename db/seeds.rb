@@ -1,9 +1,10 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
+# Seeds are optional: this application boots, migrates, and serves every page
+# with a completely empty database, and nothing here is required in
+# production. `bin/rails db:seed` only adds the storefront demo catalog, and
+# only in development or a hosted preview (SPEC M10.3) — see
+# lib/foundation/demo_seeds.rb.
 #
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
+# The first operator account is promoted from the console on purpose; there is
+# deliberately no seeded administrator, password, or API key anywhere in this
+# repository.
+Foundation::DemoSeeds.run!
