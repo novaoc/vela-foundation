@@ -2,6 +2,7 @@ class ApplicationMailer < ActionMailer::Base
   default from: -> { Foundation.runtime_config.mailer_from },
     reply_to: -> { Foundation.runtime_config.mailer_from }
 
+  helper Foundation::MailerHelper
   after_action :enforce_application_mail_identity
   layout "mailer"
 

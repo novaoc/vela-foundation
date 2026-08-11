@@ -8,6 +8,16 @@ check "Hosted preview is #{runtime_config.preview? ? 'active' : 'inactive'}" do
   make_sure true, "Runtime mode is reported from the immutable boot configuration"
 end
 
+check "Canonical domain is configured" do
+  domain = Rails.configuration.x.foundation[:domain]
+  placeholder = domain.blank? || domain == "example.com"
+  # Outside hosted preview, config.hosts is built from this domain, so an
+  # unstamped template would answer 403 to every real request. Preview gets
+  # its hostname from APP_HOST instead and is unaffected.
+  make_sure !(runtime_config.production? && !runtime_config.preview? && placeholder),
+    "Set the foundation.yml domain (bin/rename) — production refuses every request whose Host does not match it"
+end
+
 check "Mail mode: #{runtime_config.mail_mode(provider: Rails.application.config.action_mailer.delivery_method)}" do
   # Reporting mail mode must never attempt a network delivery.
   make_sure Rails.application.config.action_mailer.delivery_method.present?,

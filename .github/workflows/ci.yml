@@ -65,6 +65,16 @@ jobs:
       - name: Lint code for consistent style
         run: bin/rubocop -f github
 
+      - name: Assert working tree is unmodified
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Working tree was modified during CI."
+            echo "Commit any generated files, or fix the step that rewrote tracked files (lockfile, schema, assets, etc.)."
+            git status --porcelain
+            git diff --stat
+            exit 1
+          fi
+
   test:
     runs-on: ubuntu-latest
 
@@ -103,6 +113,16 @@ jobs:
           # RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
           # REDIS_URL: redis://localhost:6379/0
         run: bin/rails db:test:prepare test
+
+      - name: Assert working tree is unmodified
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Working tree was modified during CI."
+            echo "Commit any generated files, or fix the step that rewrote tracked files (lockfile, schema, assets, etc.)."
+            git status --porcelain
+            git diff --stat
+            exit 1
+          fi
 
   system-test:
     runs-on: ubuntu-latest
@@ -150,3 +170,14 @@ jobs:
           name: screenshots
           path: ${{ github.workspace }}/tmp/screenshots
           if-no-files-found: ignore
+
+      - name: Assert working tree is unmodified
+        if: success()
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Working tree was modified during CI."
+            echo "Commit any generated files, or fix the step that rewrote tracked files (lockfile, schema, assets, etc.)."
+            git status --porcelain
+            git diff --stat
+            exit 1
+          fi

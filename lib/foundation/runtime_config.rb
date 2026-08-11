@@ -20,6 +20,14 @@ module Foundation
     DATABASE_ROLES = %i[cache queue cable].freeze
     PREVIEW_PAYMENT_MODES = %w[simulator stripe].freeze
 
+    # Load balancers and uptime monitors reach the probe endpoints by IP or
+    # internal hostname, which never matches config.hosts, so host
+    # authorization must skip them. Shared with the test suite so the
+    # exclusion is asserted rather than restated.
+    HEALTH_PROBE_PATHS = ->(request) {
+      request.path == "/up" || request.path.start_with?("/healthcheck")
+    }.freeze
+
     # Only the local development loop may generate plaintext links, and only
     # to a host that never leaves the machine. Everything else is HTTPS.
     LOOPBACK_HOST_NAMES = %w[localhost 0.0.0.0].freeze
@@ -145,6 +153,20 @@ module Foundation
       "#<#{self.class.name} preview=#{preview?} origin=#{canonical_origin.inspect} " \
         "mail=#{smtp? ? 'smtp' : 'provider'} storage=#{storage_mode.inspect} " \
         "queue=#{queue_mode.inspect}>"
+    end
+
+    # Hosts Rails may accept in production (config.hosts). A hosted preview
+    # is assigned its hostname at run time via APP_HOST and that name never
+    # matches the product domain, so it is allowed exactly. Everywhere else
+    # the leading-dot form permits the foundation.yml domain and every
+    # subdomain — the same boundary enforce_canonical_domain applies to
+    # generated links.
+    def allowed_request_hosts(foundation_domain:)
+      if preview?
+        [ URI.parse(canonical_origin).hostname ].freeze
+      else
+        [ ".#{normalize_host(foundation_domain)}" ].freeze
+      end
     end
 
     private

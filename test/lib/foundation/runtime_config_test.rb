@@ -247,6 +247,19 @@ class FoundationRuntimeConfigTest < ActiveSupport::TestCase
     end
   end
 
+  test "production request hosts cover the product domain; preview allows only APP_HOST" do
+    production = runtime({ "APP_HOST" => "https://shop.foundation.example" }, rails_environment: :production)
+    assert_equal [ ".foundation.example" ],
+      production.allowed_request_hosts(foundation_domain: "foundation.example")
+
+    preview = runtime(
+      { "APP_HOST" => "https://slug.demo.holodex.test", "VELA_HOLODEX_PREVIEW" => "1" },
+      rails_environment: :production
+    )
+    assert_equal [ "slug.demo.holodex.test" ],
+      preview.allowed_request_hosts(foundation_domain: "foundation.example")
+  end
+
   private
 
   def runtime(environment = {}, rails_environment: :test)

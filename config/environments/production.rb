@@ -81,12 +81,15 @@ Rails.application.configure do
   # Only use :id for inspections in production.
   config.active_record.attributes_for_inspect = [ :id ]
 
-  # Enable DNS rebinding protection and other `Host` header attacks.
-  # config.hosts = [
-  #   "example.com",     # Allow requests from example.com
-  #   /.*\.example\.com/ # Allow requests from subdomains like `www.example.com`
-  # ]
-  #
-  # Skip DNS rebinding protection for the default health check endpoint.
-  # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+  # DNS rebinding / Host-header protection. Allowed hosts come from the
+  # validated runtime snapshot: the foundation.yml domain (and subdomains)
+  # in ordinary production, or the runtime-assigned APP_HOST in hosted
+  # preview. Load balancers probe /up by IP or internal name, so that
+  # path is excluded.
+  config.hosts = runtime_config.allowed_request_hosts(
+    foundation_domain: Rails.configuration.x.foundation.fetch(:domain)
+  )
+  config.host_authorization = {
+    exclude: Foundation::RuntimeConfig::HEALTH_PROBE_PATHS
+  }
 end

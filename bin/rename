@@ -183,7 +183,9 @@ module Rename
       file = path(relative)
       raise Error, "#{relative} is missing under #{root}; run this from a generated application" unless File.file?(file)
 
-      File.read(file)
+      # Explicit UTF-8: Docker/CI/cron often have no LANG, and a bare
+      # File.read then inherits US-ASCII and crashes on the non-ASCII README.
+      File.read(file, encoding: "UTF-8")
     end
 
     # Builds every replacement in memory and checks each post-condition
@@ -208,7 +210,7 @@ module Rename
     end
 
     def write!
-      changes.each { |relative, content| File.write(path(relative), content) }
+      changes.each { |relative, content| File.write(path(relative), content, encoding: "UTF-8") }
     end
 
     def identity
