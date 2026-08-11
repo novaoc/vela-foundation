@@ -51,6 +51,7 @@ class OauthConnectionsTest < ActionDispatch::IntegrationTest
 
   test "disconnecting is allowed while a password remains" do
     sign_in_as users(:confirmed)
+    grant_reauthentication!
 
     assert_difference "Identity.count", -1 do
       delete settings_connection_path(identities(:confirmed_github))
@@ -67,6 +68,13 @@ class OauthConnectionsTest < ActionDispatch::IntegrationTest
     post user_google_oauth2_omniauth_authorize_path
     follow_redirect!
 
+    # OAuth-only accounts confirm via the linked provider step-up path.
+    stub_oauth(:google_oauth2, uid: identity.uid, email: user.email)
+    post oauth_reauthentication_path(provider: "google_oauth2")
+    assert_response :success
+    post user_google_oauth2_omniauth_authorize_path
+    follow_redirect!
+
     assert_no_difference "Identity.count" do
       delete settings_connection_path(identity)
     end
@@ -78,6 +86,7 @@ class OauthConnectionsTest < ActionDispatch::IntegrationTest
 
   test "one user cannot disconnect another user's identity" do
     sign_in_as users(:confirmed)
+    grant_reauthentication!
 
     assert_no_difference "Identity.count" do
       delete settings_connection_path(identities(:oauth_only_google))

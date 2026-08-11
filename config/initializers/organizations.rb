@@ -50,7 +50,18 @@ end
 
 # The organizations gem owns this model; attach the app-specific billing and
 # entitlement behavior without copying or replacing the engine's model.
+# Organization deletion lives on the engine controller (inherits host
+# ApplicationController, so Cap 1 helpers are already available) — inject
+# the destroy before_action once.
 Rails.application.config.to_prepare do
   Organizations::Organization.include(Foundation::BillableOrganization) unless
     Organizations::Organization < Foundation::BillableOrganization
+
+  if defined?(Organizations::OrganizationsController)
+    unless Organizations::OrganizationsController._process_action_callbacks.any? { |cb|
+      cb.filter == :require_recent_reauthentication! && cb.kind == :before
+    }
+      Organizations::OrganizationsController.before_action :require_recent_reauthentication!, only: :destroy
+    end
+  end
 end

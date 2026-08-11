@@ -74,6 +74,20 @@ Rails.application.routes.draw do
   get    "settings/connections",     to: "foundation/connections#show",    as: :settings_connections
   delete "settings/connections/:id", to: "foundation/connections#destroy", as: :settings_connection
 
+  # Step-up reauthentication (sudo mode) before sensitive mutations.
+  resource :reauthentication, only: %i[new create],
+    controller: "foundation/reauthentications",
+    path: "settings/reauthentication" do
+    post "oauth/:provider", action: :oauth, as: :oauth, on: :collection
+  end
+
+  # End-user device sessions — live rows only (no login history in v1).
+  scope path: "settings/sessions", as: :settings_sessions, module: "foundation" do
+    get    "/",       to: "devices#index",   as: :root
+    delete "/others", to: "devices#others",  as: :others
+    delete "/:id",    to: "devices#destroy", as: :session
+  end
+
   # Organization invitation emails carry a signed, expiring token
   # (SPEC M4.2); redeeming it lands on the public acceptance page. Declared
   # before the engine mount so it wins over the engine's GET

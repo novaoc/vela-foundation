@@ -100,6 +100,7 @@ class BillingTest < ActionDispatch::IntegrationTest
       portal_arguments = arguments
       "https://billing.stripe.test/portal_stub"
     end
+    grant_reauthentication!
     with_stubbed_singleton_method(Foundation::BillingGateway, :portal_url, portal) do
       post billing_portal_path
     end

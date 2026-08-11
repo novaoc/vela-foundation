@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_11_070000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_11_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -339,6 +339,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_070000) do
     t.index ["plan_owner_type", "plan_owner_id", "limit_key", "period_start"], name: "idx_pricing_plans_usages_unique", unique: true
     t.index ["plan_owner_type", "plan_owner_id"], name: "idx_pricing_plans_usages_plan_owner"
     t.index ["plan_owner_type", "plan_owner_id"], name: "index_pricing_plans_usages_on_plan_owner"
+  end
+
+  create_table "reauthentication_attempts", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "key_digest", null: false
+    t.string "kind", null: false
+    t.index ["created_at"], name: "index_reauthentication_attempts_on_created_at"
+    t.index ["kind", "key_digest", "created_at"], name: "index_reauthentication_attempts_lookup"
+    t.check_constraint "kind::text = ANY (ARRAY['account'::character varying, 'ip'::character varying]::text[])", name: "reauthentication_attempts_kind_allowed"
   end
 
   create_table "sessions", force: :cascade do |t|

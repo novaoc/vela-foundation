@@ -2,6 +2,8 @@
 
 module Madmin
   class OrganizationsController < Madmin::ResourceController
+    before_action :require_recent_reauthentication!, only: %i[assign_plan remove_plan]
+
     def assign_plan
       organization = find_audited_organization
       plan = PricingPlans.plans.find { |candidate| candidate.key.to_s == params[:plan_key].to_s }

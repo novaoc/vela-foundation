@@ -2,6 +2,7 @@ class Foundation::BillingController < ApplicationController
   before_action :authenticate_user!
   before_action :set_organization
   before_action :require_billing_manager!, only: %i[checkout portal]
+  before_action :require_recent_reauthentication!, only: :portal
 
   def show
     @plan = @organization.current_pricing_plan

@@ -3,6 +3,7 @@
 # identity unless it is the account's only remaining way to sign in.
 class Foundation::ConnectionsController < ApplicationController
   before_action :authenticate_user!
+  before_action :require_recent_reauthentication!, only: :destroy
 
   def show
     @identities = current_user.identities.order(:provider, :created_at)

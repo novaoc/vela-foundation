@@ -27,6 +27,7 @@ class AdminActionsTest < ActionDispatch::IntegrationTest
   end
 
   test "plan assignment accepts only configured plans through the M5 owner API" do
+    grant_reauthentication!
     post assign_plan_madmin_organization_path(@organization), params: { plan_key: "enterprise" }
     assert_redirected_to madmin_organization_path(@organization)
     assert_equal :enterprise, @organization.reload.current_pricing_plan.key
@@ -88,6 +89,7 @@ class AdminActionsTest < ActionDispatch::IntegrationTest
   end
 
   test "every mutation emits structured audit without request parameters or secrets" do
+    grant_reauthentication!
     output = StringIO.new
     original_logger = Rails.logger
     Rails.logger = ActiveSupport::Logger.new(output)

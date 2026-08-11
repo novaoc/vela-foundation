@@ -99,10 +99,12 @@ class OrganizationManagementTest < ActionDispatch::IntegrationTest
 
   test "only the owner can delete the organization" do
     sign_in_and_switch(@admin)
+    grant_reauthentication!
     delete organizations.organization_path(@org)
     assert Organizations::Organization.exists?(@org.id)
 
     sign_in_and_switch(@owner)
+    grant_reauthentication!
     delete organizations.organization_path(@org)
     assert_not Organizations::Organization.exists?(@org.id)
   end

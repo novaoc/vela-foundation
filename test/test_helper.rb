@@ -67,6 +67,17 @@ module ActiveSupport
   end
 end
 
+module ReauthenticationTestHelpers
+  REAUTH_PASSWORD = "correct horse battery"
+
+  private
+
+  # Opens the Cap 1 trust window via the real password confirm endpoint.
+  def grant_reauthentication!(password: REAUTH_PASSWORD)
+    post reauthentication_path, params: { password: password }
+  end
+end
+
 module StorefrontTestHelpers
   private
 
@@ -89,3 +100,4 @@ module StorefrontTestHelpers
 end
 
 ActiveSupport::TestCase.include(StorefrontTestHelpers)
+ActionDispatch::IntegrationTest.include(ReauthenticationTestHelpers)

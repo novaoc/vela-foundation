@@ -25,7 +25,8 @@
         nav_items = [
           { label: Foundation.storefront_enabled? ? "Shop" : "Home", icon: :home, href: root_path, active: request.path == root_path || request.path.start_with?("/storefront/products") },
           { label: "Organizations", icon: :workspaces, href: organizations.organizations_path, active: request.path.start_with?("/organizations") },
-          { label: "Connections", icon: :settings, href: settings_connections_path, active: request.path.start_with?("/settings") }
+          { label: "Connections", icon: :settings, href: settings_connections_path, active: request.path == settings_connections_path || request.path.start_with?("/settings/connections") },
+          { label: "Devices", icon: :person, href: settings_sessions_root_path, active: request.path.start_with?("/settings/sessions") || request.path.start_with?("/settings/reauthentication") }
         ]
         if Foundation.storefront_enabled?
           nav_items.insert(1, { label: "Cart", icon: :payments, href: storefront_cart_path, active: request.path == storefront_cart_path || request.path == storefront_checkout_path })

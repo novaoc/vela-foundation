@@ -4,6 +4,7 @@ class Users::RegistrationsController < Devise::RegistrationsController
   before_action :validate_cloudflare_turnstile, only: :create
 
   before_action :configure_sign_up_params, only: :create
+  before_action :require_recent_reauthentication!, only: :update
 
   # On top of Devise's create, persist the legal assent the user just gave
   # (SPEC M2.4), and — when the signup arrived through an organization
@@ -15,6 +16,14 @@ class Users::RegistrationsController < Devise::RegistrationsController
 
       LegalAcceptance.record!(user: user, request: request, context: "signup")
       accept_pending_organization_invitation!(user) if user.skip_personal_organization
+    end
+  end
+
+  def update
+    super do |user|
+      next unless user.errors.empty?
+
+      clear_reauthentication_window! if user.saved_change_to_encrypted_password?
     end
   end
 

@@ -194,10 +194,11 @@ Sessions.configure do |config|
   # take over with your password-confirm flow, or return false/nil to
   # block (a bare falsy answers 403; the gate fails closed):
   #
-  # config.require_reauthentication = ->(controller) do
-  #   controller.session[:sudo_until]&.future? ||
-  #     controller.redirect_to(controller.main_app.confirm_password_path)
-  # end
+  # Host Cap 1 gate — same fail-closed helper first-party controllers use.
+  config.require_reauthentication = ->(controller) do
+    controller.reauthenticated? ||
+      controller.require_recent_reauthentication!
+  end
   #
   # The session-of-record model (escape hatch for apps that installed with
   # --model because a legacy Session class was in the way):
