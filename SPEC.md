@@ -337,6 +337,41 @@ native-only responses; association unconfigured→404 and configured→JSON
 covered; host-authorization coverage for association paths on the product
 domain; `docs/native/SERVER_CONTRACT.md` present.
 
+## B2 — CRM capability (optional module, on by default in template)
+
+Organization-scoped CRM primitives as a first-class omittable module
+(`config/foundation/modules/crm.yml`). Designed as application
+infrastructure reused across verticals, not a single industry's feature set.
+
+1. **Models.** Contact, Company, Lead, Opportunity, Pipeline,
+   PipelineStage, Activity, Note, Task, Tag, and Tagging. Tables use the
+   `crm_` prefix. Every row belongs to an organization (FK to core).
+2. **Behaviour.** Lead and opportunity ownership/assignment (owners must
+   be members of the current organization), opportunity pipeline stage
+   movement (status follows closed-won/closed-lost stages), notes and
+   tasks on core records, and an activity timeline that records creates,
+   assignments, stage changes, notes, and task events. Listing surfaces
+   support simple query and ownership/status filters with offset
+   pagination.
+3. **UI.** Authenticated MD3 CRUD under `/crm` for the core records, a
+   per-record timeline (notes, tasks, activity), pipeline/stage
+   management, and a workspace overview. Navigation exposes a CRM item
+   when the module is present.
+4. **Organization isolation (security).** Every query is scoped
+   server-side through the current organization. Probing an id from
+   another organization is indistinguishable from a nonexistent id
+   (404). Cross-organization isolation tests cover index leakage, show,
+   update, destroy, assignment, stage movement, and notes.
+5. **Module packaging.** Owned paths, host-file markers, table prefixes,
+   and residue patterns allow `bin/foundation-modules omit crm` to leave
+   a working application with no CRM residue.
+6. **Deferred.** Drag-and-drop kanban, full-text search, bulk operations,
+   import/export, and reporting are out of scope for this milestone.
+
+Acceptance: full gate green with CRM included; omit crm succeeds with a
+clean residue scan; isolation tests red against any cross-tenant read or
+mutation.
+
 ## Verification gates (run for every milestone)
 
 1. Docker `test` stage green (M1.1).
