@@ -36,6 +36,7 @@ Rails.application.routes.draw do
       resources :events, only: %i[index show], path: "login-activity", controller: "session_events"
     end
 
+    # foundation:module storefront
     if Foundation.storefront_enabled?
       scope path: "admin/storefront", module: "foundation/admin", as: "storefront_admin" do
         resources :products, except: :destroy do
@@ -49,6 +50,7 @@ Rails.application.routes.draw do
         resources :payment_events, only: %i[index show]
       end
     end
+    # /foundation:module storefront
 
     mount MissionControl::Jobs::Engine => "/admin/jobs", as: :admin_jobs
   end
@@ -96,6 +98,7 @@ Rails.application.routes.draw do
   get "invitations/mail/:signed_token",
     to: "foundation/invitation_links#show", as: :organization_invitation_link
 
+  # foundation:module storefront
   if Foundation.storefront_enabled?
     scope "storefront", module: "foundation/storefront", as: :storefront do
       resources :products, only: %i[index show], param: :slug do
@@ -123,10 +126,11 @@ Rails.application.routes.draw do
   # Stripe signature plus settlement readiness.
   post "storefront/stripe/webhook", to: "foundation/storefront/stripe_webhooks#create",
     as: :storefront_stripe_webhook
+  # /foundation:module storefront
 
   # Team workspaces: organizations, members, switching, and invitations
   # (SPEC M4) — the organizations gem's engine, mounted at the root. All
-  # application-owned storefront paths stay above this catch-all mount.
+  # application-owned paths stay above this catch-all mount.
   mount Organizations::Engine => "/"
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
@@ -170,9 +174,9 @@ Rails.application.routes.draw do
   end
 
   # Minimal landing page until the M7 marketing set replaces it.
-  if Foundation.storefront_enabled?
+  if Foundation.storefront_enabled? # foundation:module storefront
     root "foundation/storefront/products#index"
-  else
+  else # foundation:module storefront
     root "foundation/home#show"
-  end
+  end # foundation:module storefront
 end

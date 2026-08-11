@@ -40,7 +40,7 @@ class MailDesignTest < ActionMailer::TestCase
     end
   end
 
-  test "organization invitation and storefront receipt use branded inline layout" do
+  test "organization invitation uses branded inline layout" do
     organization = Organizations::Organization.create!(name: "Mail Design Team")
     Organizations::Membership.create!(
       organization: organization,
@@ -49,21 +49,26 @@ class MailDesignTest < ActionMailer::TestCase
     )
     invitation = organization.send_invite_to!("design-invitee@example.com", invited_by: users(:confirmed))
     invite = Foundation::OrganizationInvitationMailer.invitation_email(invitation).message
+
+    assert_multipart_mail invite
+    assert_inline_branded_html invite.html_part.body.decoded
+    invite_html = invite.html_part.body.decoded
+    assert_match(/Accept the invitation/, invite_html)
+    assert_includes invite_html, "background-color: #{LIGHT.fetch("primary")}"
+  end
+
+  # foundation:module storefront
+  test "storefront receipt uses branded inline layout" do
     receipt = Foundation::Storefront::OrderMailer.receipt(create_storefront_order).message
 
-    [ invite, receipt ].each do |mail|
-      assert_multipart_mail mail
-      assert_inline_branded_html mail.html_part.body.decoded
-    end
-
-    invite_html = invite.html_part.body.decoded
+    assert_multipart_mail receipt
+    assert_inline_branded_html receipt.html_part.body.decoded
     receipt_html = receipt.html_part.body.decoded
-    assert_match(/Accept the invitation/, invite_html)
     assert_match(/View your receipt/, receipt_html)
     assert_match(/Terms of Service/, receipt_html)
-    assert_includes invite_html, "background-color: #{LIGHT.fetch("primary")}"
     assert_includes receipt_html, "background-color: #{LIGHT.fetch("primary")}"
   end
+  # /foundation:module storefront
 
   test "mailer helper colours match committed light scheme tokens" do
     helper = Object.new.extend(Foundation::MailerHelper)

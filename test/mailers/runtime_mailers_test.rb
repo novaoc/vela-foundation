@@ -28,7 +28,7 @@ class RuntimeMailersTest < ActionMailer::TestCase
     end
   end
 
-  test "organization invite and storefront receipt use canonical host and app identity" do
+  test "organization invite uses canonical host and app identity" do
     with_runtime_mail do
       organization = Organizations::Organization.create!(name: "Runtime Mail Team")
       Organizations::Membership.create!(
@@ -39,10 +39,17 @@ class RuntimeMailersTest < ActionMailer::TestCase
       invitation = organization.send_invite_to!("invitee@example.com", invited_by: users(:confirmed))
       invite = Foundation::OrganizationInvitationMailer.invitation_email(invitation).message
 
+      assert_runtime_mail(invite)
+      assert_match %r{https://#{CANONICAL_HOST}/invitations/mail/}, invite.body.encoded
+    end
+  end
+
+  # foundation:module storefront
+  test "storefront receipt uses canonical host and app identity" do
+    with_runtime_mail do
       receipt = Foundation::Storefront::OrderMailer.receipt(create_storefront_order).message
 
-      [ invite, receipt ].each { |mail| assert_runtime_mail(mail) }
-      assert_match %r{https://#{CANONICAL_HOST}/invitations/mail/}, invite.body.encoded
+      assert_runtime_mail(receipt)
       assert_match %r{https://#{CANONICAL_HOST}/storefront/orders/}, receipt.body.encoded
       assert_match %r{https://#{CANONICAL_HOST}/legal/terms}, receipt.body.encoded
       assert_match %r{https://#{CANONICAL_HOST}/legal/privacy}, receipt.text_part.body.decoded
@@ -50,6 +57,7 @@ class RuntimeMailersTest < ActionMailer::TestCase
       assert_match(/@#{Regexp.escape(CANONICAL_HOST)}\z/, receipt.message_id)
     end
   end
+  # /foundation:module storefront
 
   private
 

@@ -149,7 +149,7 @@ class NativeShellTest < ActionDispatch::IntegrationTest
   test "configured apple-app-site-association is public JSON from configuration" do
     with_native_config(
       ios_app_id: "TEAMID.com.example.app",
-      ios_paths: [ "/storefront/*", "NOT /admin/*" ]
+      ios_paths: [ "/app/*", "NOT /admin/*" ]
     ) do
       get apple_app_site_association_path
       assert_response :success
@@ -158,7 +158,7 @@ class NativeShellTest < ActionDispatch::IntegrationTest
       payload = JSON.parse(response.body)
       detail = payload.fetch("applinks").fetch("details").first
       assert_equal "TEAMID.com.example.app", detail.fetch("appID")
-      assert_equal [ "/storefront/*", "NOT /admin/*" ], detail.fetch("paths")
+      assert_equal [ "/app/*", "NOT /admin/*" ], detail.fetch("paths")
       assert_equal [], payload.fetch("applinks").fetch("apps")
     end
   end

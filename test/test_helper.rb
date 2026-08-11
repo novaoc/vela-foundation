@@ -79,6 +79,7 @@ module ReauthenticationTestHelpers
   end
 end
 
+# foundation:module storefront
 module StorefrontTestHelpers
   private
 
@@ -101,4 +102,5 @@ module StorefrontTestHelpers
 end
 
 ActiveSupport::TestCase.include(StorefrontTestHelpers)
+# /foundation:module storefront
 ActionDispatch::IntegrationTest.include(ReauthenticationTestHelpers)

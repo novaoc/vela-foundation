@@ -19,6 +19,7 @@ class QueuedMailTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # foundation:module storefront
   test "mail handed to the queue is enqueued and then actually delivered" do
     with_queue_in_puma do
       ActionMailer::Base.deliveries.clear
@@ -58,6 +59,7 @@ class QueuedMailTest < ActionDispatch::IntegrationTest
       assert_equal [ order.email ], ActionMailer::Base.deliveries.last.to
     end
   end
+  # /foundation:module storefront
 
   private
 

@@ -59,6 +59,7 @@ class LegalPagesTest < ActionDispatch::IntegrationTest
     assert_legal_links("the signup page")
   end
 
+  # foundation:module storefront
   test "the guest checkout page links both legal documents" do
     assert Foundation.storefront_enabled?, "the template ships with the storefront enabled"
     product = create_storefront_product
@@ -69,6 +70,7 @@ class LegalPagesTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_legal_links("the checkout page")
   end
+  # /foundation:module storefront
 
   test "the OAuth assent interstitial links both legal documents" do
     OmniAuth.config.test_mode = true

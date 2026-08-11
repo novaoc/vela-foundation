@@ -118,6 +118,7 @@ class AdminAccessTest < ActionDispatch::IntegrationTest
     assert_no_secret("SESSION-SECRET-M6", session_row.token_digest, "ADOPTION-SECRET-M6")
   end
 
+  # foundation:module storefront
   test "dashboard links the enabled storefront admin from nav and body" do
     sign_in_as(@admin)
     get "/admin/dashboard"
@@ -133,6 +134,7 @@ class AdminAccessTest < ActionDispatch::IntegrationTest
     assert_not Rails.application.routes.named_routes.route_defined?(:madmin_products)
     assert_not Rails.application.routes.named_routes.route_defined?(:madmin_orders)
   end
+  # /foundation:module storefront
 
   private
 

@@ -32,9 +32,9 @@ module VelaFoundation
     # so every Rails-controlled hosted-preview response receives noindex.
     config.middleware.insert_before 0, Foundation::NoindexMiddleware
 
-    # Storefront uploads are ordinary admin-only multipart fields. Disable
-    # Active Storage's generic public/direct-upload routes; catalog images are
-    # served only through the bounded active-product endpoint.
+    # Disable Active Storage's generic public/direct-upload routes. Uploads are
+    # ordinary authenticated multipart fields; catalog images (when present)
+    # are served only through a bounded product endpoint.
     config.active_storage.draw_routes = false
 
     # Configuration for the application, engines, and railties goes here.
