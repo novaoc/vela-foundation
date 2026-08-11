@@ -6,8 +6,10 @@
 
 .DS_Store
 
-# Ignore bundler config.
+# Ignore bundler config and any vendored gem install (CI caches gems into
+# vendor/bundle, which must never look like a working-tree change).
 /.bundle
+/vendor/bundle
 
 # Ignore all environment files.
 /.env*
