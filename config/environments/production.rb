@@ -38,8 +38,10 @@ Rails.application.configure do
   # so a stuck action cannot pin a Puma worker indefinitely.
   config.middleware.insert_after ActionDispatch::RequestId, Rack::Timeout, service_timeout: 15
 
-  # Skip http-to-https redirect for the default health check endpoint.
-  # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
+  # Kamal-proxy and load balancers probe over plain HTTP inside the private
+  # network. Skip the HTTPS redirect for those paths only — same set excluded
+  # from host authorization below.
+  config.ssl_options = { redirect: { exclude: Foundation::RuntimeConfig::HEALTH_PROBE_PATHS } }
 
   # Log to STDOUT with the current request id as a default log tag.
   config.log_tags = [ :request_id ]

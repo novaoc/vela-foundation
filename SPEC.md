@@ -291,6 +291,52 @@ Feature-flagged by `foundation.yml` (`storefront_enabled`).
    guide (env vars incl. Stripe + SMTP + OAuth), Holodex preview notes,
    legal-review checklist, license (MIT).
 
+## M14 — Native mobile shell server contract
+
+Server half of a Hotwire Native shell. Built from public Hotwire Native,
+Apple Universal Links, Google Digital Asset Links, and Rails 8.1
+documentation only. Coexists with the M10 PWA manifest.
+
+1. **Versioned, per-platform path configuration.** JSON documents at
+   `/native/configurations/ios/v1` and `/native/configurations/android/v1`
+   (Hotwire Native `settings` + `rules` shape). The version is part of the
+   URL so a shipped binary pins a contract; unknown versions 404. Separate
+   iOS and Android documents.
+2. **Native entry and auth handoff.** `/native/entry` hands an authenticated
+   web session to the shell (turbo-rails `recede_or_redirect_to`); guests
+   land on `/native/auth`, a native-only MD3 sign-in screen (Material
+   Symbols only, no emoji). Successful native sign-in returns through
+   entry. Ordinary Devise/OmniAuth controllers remain the credential path.
+3. **Current-user poll.** `GET /native/session` returns JSON
+   `{ signed_in, user: { id, email } | null }` for the shell. It does not
+   create or destroy sessions.
+4. **Durable web-view sign-in.** Native password and OAuth sign-in always
+   set Devise's `remember_user_token` (`:rememberable`). Persistence is the
+   WebView cookie jar (session cookie + remember cookie; `Secure` under
+   `force_ssl`). No custom native token. Cookie behaviour is documented in
+   `docs/native/SERVER_CONTRACT.md`.
+5. **Deep-link association files.** Public, unauthenticated:
+   `/.well-known/apple-app-site-association` (and root
+   `/apple-app-site-association`) and `/.well-known/assetlinks.json`, with
+   `Content-Type: application/json`. Contents come only from
+   `config/foundation.yml` → `native` (ios_app_id, ios_paths,
+   android_package_name, android_sha256_cert_fingerprints). Unconfigured
+   identifiers yield **404** (never a crash, never a placeholder Team ID).
+6. **Native-shell gate.** Every native-only behaviour requires a User-Agent
+   matching turbo-rails `hotwire_native_app?` (`/(Turbo|Hotwire) Native/`).
+   Ordinary browsers receive 404 for path configuration, entry, auth, and
+   session poll. Association files stay public for OS verifiers. Tests
+   prove browsers never receive native-only behaviour.
+7. **No security bypass.** Step-up reauthentication (M11) still gates
+   sensitive mutations for native UAs. Host authorization is not widened
+   for association files; they remain reachable on the product domain.
+   PWA manifest at `/manifest.webmanifest` keeps working.
+
+Acceptance: full gate green; browser-isolation test red against any leak of
+native-only responses; association unconfigured→404 and configured→JSON
+covered; host-authorization coverage for association paths on the product
+domain; `docs/native/SERVER_CONTRACT.md` present.
+
 ## Verification gates (run for every milestone)
 
 1. Docker `test` stage green (M1.1).

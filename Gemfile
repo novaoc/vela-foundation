@@ -40,8 +40,16 @@ gem "bootsnap", require: false
 # Add HTTP asset caching/compression and X-Sendfile acceleration to Puma [https://github.com/basecamp/thruster/]
 gem "thruster", require: false
 
+# Deploy this application anywhere as a Docker container [https://kamal-deploy.org]
+# MIT-licensed; used on the operator machine, not required inside the app image.
+gem "kamal", "~> 2.12", require: false
+
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 1.2"
+
+# S3-compatible Active Storage (AWS S3, Cloudflare R2, MinIO, …). Apache-2.0.
+# Selected only when ACTIVE_STORAGE_SERVICE names a service that uses it.
+gem "aws-sdk-s3", require: false
 
 # Foundation: operational healthcheck endpoint at /healthcheck [https://github.com/rameerez/allgood]
 gem "allgood"

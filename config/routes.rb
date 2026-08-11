@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   # Email/password authentication (SPEC M2). Custom controllers add the
   # Turnstile check and the legal-assent record on top of stock Devise.
   devise_for :users, controllers: {
+    sessions: "users/sessions",
     registrations: "users/registrations",
     passwords: "users/passwords",
     confirmations: "users/confirmations",
@@ -141,6 +142,32 @@ Rails.application.routes.draw do
   # foundation ships no offline cache, so nothing here can serve stale
   # authenticated pages.
   get "manifest.webmanifest", to: "foundation/pwa#manifest", as: :pwa_manifest, format: false
+
+  # Native mobile shell server contract (SPEC M14). Association files are
+  # public (OS verifiers). Path configuration, entry, auth, and session poll
+  # are gated on native-shell detection inside the controllers.
+  get ".well-known/apple-app-site-association",
+    to: "foundation/native/associations#apple",
+    as: :apple_app_site_association,
+    format: false
+  get "apple-app-site-association",
+    to: "foundation/native/associations#apple",
+    format: false
+  get ".well-known/assetlinks.json",
+    to: "foundation/native/associations#android",
+    as: :android_assetlinks,
+    format: false
+
+  scope path: "native", module: "foundation/native", as: :native do
+    get "configurations/:platform/v:version",
+      to: "path_configurations#show",
+      constraints: { platform: /ios|android/, version: /\d+/ },
+      as: :path_configuration,
+      format: false
+    get "entry", to: "entries#show", as: :entry
+    get "auth", to: "auth#show", as: :auth
+    get "session", to: "sessions#show", as: :session
+  end
 
   # Minimal landing page until the M7 marketing set replaces it.
   if Foundation.storefront_enabled?

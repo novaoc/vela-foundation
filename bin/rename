@@ -109,6 +109,7 @@ module Rename
     "OAuth: set GOOGLE_OAUTH_CLIENT_ID/SECRET and GITHUB_OAUTH_CLIENT_ID/SECRET, or remove those buttons.",
     "Mail: set SMTP_ADDRESS, SMTP_PORT, SMTP_USERNAME/SMTP_PASSWORD, MAILER_FROM, and APP_HOST.",
     "Storage: set ACTIVE_STORAGE_SERVICE to a cloud service in config/storage.yml.",
+    "Deploy: set servers, proxy.host, APP_HOST, and registry in config/deploy.yml; fill .kamal/secrets (see docs/DEPLOY.md).",
     "Brand: set brand_seed_color in config/foundation.yml, then run bin/rails foundation:icon and regenerate tokens.",
     "Legal: review every TODO-OPERATOR in the Terms and Privacy pages with counsel before launch.",
     "Admin: promote the first operator from the console (User#admin?); there is no self-serve path."

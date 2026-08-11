@@ -62,3 +62,17 @@ shared:
   # Probes pass with an informational note when the platform cannot report figures.
   healthcheck_disk_usage_percent_max: 90
   healthcheck_memory_usage_percent_max: 90
+
+  # Native mobile shell (SPEC M14). Association identifiers stay empty until
+  # an operator fills them; unconfigured association endpoints return 404.
+  # Path-configuration JSON does not embed these values.
+  native:
+    # Apple Universal Links: "{TeamID}.{bundle.id}" (e.g. ABCDE12345.com.example.app).
+    ios_app_id: ""
+    # Paths claimed for Universal Links. Default claims the whole site.
+    ios_paths:
+      - "*"
+    # Android App Links package name (applicationId).
+    android_package_name: ""
+    # SHA-256 cert fingerprints of the signing key(s), colon-separated hex.
+    android_sha256_cert_fingerprints: []

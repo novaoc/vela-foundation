@@ -35,6 +35,22 @@ class HostAuthorizationTest < ActiveSupport::TestCase
     assert_equal 403, request_status(app, "10.0.0.7", "/billing")
   end
 
+  test "association files remain reachable on the product domain" do
+    domain = Rails.configuration.x.foundation.fetch(:domain)
+    app = host_authorization_app(
+      Foundation.runtime_config.allowed_request_hosts(foundation_domain: domain)
+    )
+
+    # Deep-link verifiers fetch these on the public product host. They are not
+    # health probes and must not rely on the host-authorization exclude list;
+    # they simply need the product domain to be allowed (which it is).
+    assert_equal 200, request_status(app, domain, "/.well-known/apple-app-site-association")
+    assert_equal 200, request_status(app, domain, "/.well-known/assetlinks.json")
+    assert_equal 403, request_status(app, "evil.invalid", "/.well-known/apple-app-site-association")
+    assert_equal 403, request_status(app, "evil.invalid", "/.well-known/assetlinks.json")
+  end
+
+
   test "hosted preview allows only its runtime-assigned APP_HOST" do
     with_env(
       "VELA_HOLODEX_PREVIEW" => "1",

@@ -12,6 +12,8 @@
 #   * a pending Cap 1 OAuth step-up re-proves a linked provider and opens
 #     the same sudo window as password confirmation (never links mid-flow).
 class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
+  include Devise::Controllers::Rememberable
+
   def google_oauth2
     complete_oauth
   end
@@ -124,6 +126,9 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
 
   def sign_in_identity(identity)
     set_flash_message(:notice, :success, kind: provider_label) if is_navigational_format?
+    # Match password sign-in: native shells get a rememberable cookie so the
+    # web view session survives process death (SPEC M14).
+    remember_me(identity.user) if hotwire_native_app?
     sign_in_and_redirect identity.user, event: :authentication
   end
 

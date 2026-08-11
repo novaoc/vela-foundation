@@ -234,11 +234,18 @@ remains MIT licensed.
 ## Self-hosting
 
 The production image is the standard Rails multi-stage `Dockerfile` (Thruster
-and Puma on port 80). Provide `RAILS_MASTER_KEY` (or `SECRET_KEY_BASE`), a
-PostgreSQL server, and your domain in `config/foundation.yml`; `docker build .`
-produces a deployable image for Kamal or any container host. Asset
-precompilation needs no secrets (`SECRET_KEY_BASE_DUMMY=1` is used at build
+and Puma on port 80). `config/deploy.yml` and `.kamal/secrets` are the Kamal
+ship path; step-by-step operator instructions are in
+[`docs/DEPLOY.md`](docs/DEPLOY.md). Provide `RAILS_MASTER_KEY` (or
+`SECRET_KEY_BASE`), `DATABASE_URL`, cloud object storage via
+`ACTIVE_STORAGE_SERVICE`, and your domain in `config/foundation.yml`.
+`docker build .` produces the same image for Kamal or any container host.
+Asset precompilation needs no secrets (`SECRET_KEY_BASE_DUMMY=1` at build
 time). Point monitoring at `/healthcheck`.
+
+Self-host and hosted preview are different runtimes: do not set
+`VELA_HOLODEX_PREVIEW` on a real deploy. Preview is documented in
+[`docs/HOSTED_RUNTIME.md`](docs/HOSTED_RUNTIME.md).
 
 Two boot-time checks will stop a misconfigured production deploy rather than
 let it half-work. With the storefront enabled, real Stripe keys must be

@@ -36,8 +36,13 @@ class ApplicationController < ActionController::Base
 
   # The public invitation page parks the invitation token in the session
   # and sends existing users to sign in (SPEC M4.2); complete the join as
-  # soon as they authenticate.
+  # soon as they authenticate. Native shells hand off through /native/entry
+  # so the web view can dismiss its auth stack (SPEC M14).
   def after_sign_in_path_for(resource)
+    if hotwire_native_app? && resource.is_a?(User)
+      return native_entry_path unless pending_invitation_acceptance_redirect_path_for(resource)
+    end
+
     if resource.is_a?(User) && (path = pending_invitation_acceptance_redirect_path_for(resource))
       path
     else
