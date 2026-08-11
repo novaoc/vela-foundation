@@ -40,6 +40,13 @@ class RegistrationTest < ActionDispatch::IntegrationTest
     assert_predicate acceptance.ip, :present?
   end
 
+  test "signup cannot self-promote to application admin" do
+    post user_registration_path, params: sign_up_params(admin: "1")
+
+    assert_response :redirect
+    assert_not_predicate User.find_by!(email: "fresh@example.com"), :admin?
+  end
+
   test "signup without the assent checkbox is rejected server-side" do
     assert_no_difference [ "User.count", "LegalAcceptance.count" ] do
       post user_registration_path, params: sign_up_params(legal_assent: "0")

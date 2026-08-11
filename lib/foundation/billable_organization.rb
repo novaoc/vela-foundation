@@ -54,5 +54,15 @@ module Foundation
     def billing_management_available?
       live_subscription.present?
     end
+
+    # Read-only projections for the admin resource. Mutations continue to go
+    # through pricing_plans' assign/remove APIs rather than writable fields.
+    def admin_plan_key
+      current_pricing_plan.key.to_s
+    end
+
+    def admin_plan_source
+      current_pricing_plan_source.to_s
+    end
   end
 end

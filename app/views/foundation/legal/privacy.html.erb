@@ -38,8 +38,9 @@
       checkout. Card numbers are handled by our payment processor and never
       reach our servers.</p>
     <p><strong>Session data.</strong> Cookies that keep you signed in,
-      remember-me tokens if you opt in, and security counters such as failed
-      sign-in attempts and account-lock timestamps.</p>
+      remember-me tokens if you opt in, device and browser details, IP address,
+      approximate location when available, sign-in method, last activity,
+      failed sign-in attempts, revocations, and account-lock timestamps.</p>
     <p><strong>Technical data.</strong> Server logs with IP address, browser
       user agent, requested pages, and timestamps, kept for security and
       debugging; and the answers of anti-bot challenges (Cloudflare
@@ -93,9 +94,13 @@
     <h2 class="text-xl font-semibold">6. Cookies and analytics</h2>
     <p>
       The template uses only cookies that are necessary to operate the
-      Service: the session cookie, an optional remember-me cookie, and CSRF
-      protection. These need no consent banner in most jurisdictions. No
-      analytics or tracking cookies are set by default.
+      Service: the session cookie, an optional remember-me cookie, CSRF
+      protection, and a signed random device identifier created at sign-in.
+      The device identifier recognizes a browser installation so repeated
+      sign-ins can be managed as one device; it survives logout for up to five
+      years but contains no browser fingerprint or account identifier. These
+      need no consent banner in most jurisdictions. No analytics or marketing
+      cookies are set by default.
       <strong>TODO-OPERATOR:</strong> if you add analytics or marketing tags,
       document them here and add a consent mechanism where required.
     </p>
@@ -108,6 +113,7 @@
       <li>Legal-assent records: kept for the life of the account plus the limitation period for contract claims. <!-- TODO-OPERATOR: confirm the period for your jurisdiction. --></li>
       <li>Order and invoice data: kept for the statutory bookkeeping period. <!-- TODO-OPERATOR: e.g. 6-10 years depending on jurisdiction. --></li>
       <li>Server logs and security counters: rotated on a short schedule, typically 30-90 days.</li>
+      <li>Device session history: kept for up to 12 months by default, then removed by a daily retention job.</li>
     </ul>
   </section>
 

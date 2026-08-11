@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_11_040140) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_11_042139) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -313,7 +313,99 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_040140) do
     t.index ["plan_owner_type", "plan_owner_id"], name: "index_pricing_plans_usages_on_plan_owner"
   end
 
+  create_table "sessions", force: :cascade do |t|
+    t.string "adoption_key"
+    t.string "app_build"
+    t.string "app_name"
+    t.string "app_version"
+    t.jsonb "auth_detail"
+    t.string "auth_method"
+    t.string "auth_provider"
+    t.string "browser_name"
+    t.string "browser_version"
+    t.string "city"
+    t.jsonb "client_hints"
+    t.string "country_code", limit: 2
+    t.string "country_name"
+    t.datetime "created_at", null: false
+    t.string "device_id", limit: 36
+    t.string "device_model"
+    t.string "device_type"
+    t.datetime "ended_at"
+    t.bigint "ended_by_id"
+    t.string "ended_by_type"
+    t.jsonb "ended_metadata"
+    t.string "ended_reason"
+    t.string "ip_address", limit: 45
+    t.datetime "last_seen_at"
+    t.string "last_seen_ip", limit: 45
+    t.string "os_name"
+    t.string "os_version"
+    t.string "region"
+    t.string "scope"
+    t.string "token_digest"
+    t.datetime "updated_at", null: false
+    t.text "user_agent"
+    t.bigint "user_id", null: false
+    t.index ["adoption_key"], name: "index_sessions_on_adoption_key", unique: true
+    t.index ["auth_method"], name: "index_sessions_on_auth_method"
+    t.index ["auth_provider"], name: "index_sessions_on_auth_provider"
+    t.index ["country_code"], name: "index_sessions_on_country_code"
+    t.index ["device_id"], name: "index_sessions_on_device_id"
+    t.index ["ended_at"], name: "index_sessions_on_ended_at"
+    t.index ["ended_by_type", "ended_by_id"], name: "index_sessions_on_ended_by_type_and_ended_by_id"
+    t.index ["ended_reason"], name: "index_sessions_on_ended_reason"
+    t.index ["last_seen_at"], name: "index_sessions_on_last_seen_at"
+    t.index ["token_digest"], name: "index_sessions_on_token_digest", unique: true
+    t.index ["user_id"], name: "index_sessions_on_user_id"
+  end
+
+  create_table "sessions_events", force: :cascade do |t|
+    t.string "app_build"
+    t.string "app_name"
+    t.string "app_version"
+    t.jsonb "auth_detail"
+    t.string "auth_method"
+    t.string "auth_provider"
+    t.bigint "authenticatable_id"
+    t.string "authenticatable_type"
+    t.string "browser_name"
+    t.string "browser_version"
+    t.string "city"
+    t.jsonb "client_hints"
+    t.string "context"
+    t.string "country_code", limit: 2
+    t.string "country_name"
+    t.string "device_id", limit: 36
+    t.string "device_model"
+    t.string "device_type"
+    t.string "event", null: false
+    t.string "failure_reason"
+    t.string "identity"
+    t.string "ip_address", limit: 45
+    t.decimal "latitude", precision: 10, scale: 7
+    t.decimal "longitude", precision: 10, scale: 7
+    t.jsonb "metadata"
+    t.datetime "occurred_at", null: false
+    t.string "os_name"
+    t.string "os_version"
+    t.string "region"
+    t.string "request_id"
+    t.string "revoked_reason"
+    t.string "scope"
+    t.bigint "session_id"
+    t.text "user_agent"
+    t.index ["authenticatable_type", "authenticatable_id", "occurred_at"], name: "index_sessions_events_on_authenticatable_and_occurred_at"
+    t.index ["device_id", "occurred_at"], name: "index_sessions_events_on_device_id_and_occurred_at"
+    t.index ["event", "occurred_at"], name: "index_sessions_events_on_event_and_occurred_at"
+    t.index ["identity"], name: "index_sessions_events_on_identity"
+    t.index ["ip_address"], name: "index_sessions_events_on_ip_address"
+    t.index ["occurred_at"], name: "index_sessions_events_on_occurred_at"
+    t.index ["session_id"], name: "index_sessions_events_on_session_id"
+  end
+
   create_table "users", force: :cascade do |t|
+    t.boolean "admin", default: false, null: false
     t.datetime "confirmation_sent_at"
     t.string "confirmation_token"
     t.datetime "confirmed_at"
@@ -354,4 +446,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_040140) do
   add_foreign_key "pay_charges", "pay_subscriptions", column: "subscription_id"
   add_foreign_key "pay_payment_methods", "pay_customers", column: "customer_id"
   add_foreign_key "pay_subscriptions", "pay_customers", column: "customer_id"
+  add_foreign_key "sessions", "users"
 end

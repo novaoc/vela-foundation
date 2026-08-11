@@ -7,7 +7,7 @@ module Foundation
     TERMS_VERSION = "v1"
     TERMS_UPDATED_ON = Date.new(2026, 8, 10)
 
-    PRIVACY_VERSION = "v1"
+    PRIVACY_VERSION = "v2"
     PRIVACY_UPDATED_ON = Date.new(2026, 8, 10)
 
     # Human-visible identifier rendered on the document, e.g. "v1 — 2026-08-10".

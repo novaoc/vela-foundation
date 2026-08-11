@@ -83,6 +83,13 @@ gem "stripe", "~> 19.0"
 gem "pricing_plans", "~> 0.4"
 gem "profitable", "~> 0.6"
 
+# Foundation: operator-only administration, per-device session tracking, and
+# Solid Queue visibility (SPEC M6). All three are MIT-licensed and support the
+# Rails 8.1 / Ruby 4 foundation runtime.
+gem "madmin", "~> 2.4.0"
+gem "sessions", "~> 0.2.2"
+gem "mission_control-jobs", "~> 1.1.0"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"

@@ -9,6 +9,34 @@ Rails.application.routes.draw do
     omniauth_callbacks: "users/omniauth_callbacks"
   }
 
+  # Operator administration (SPEC M6). The authenticated route constraint
+  # prevents the admin surface from matching for guests, normal users, or
+  # organization admins. Controllers repeat the User#admin? authorization so
+  # mounted engines and future route changes still fail closed independently.
+  authenticated :user, ->(user) { user.admin? } do
+    scope path: "admin", module: "madmin", as: "madmin" do
+      get "dashboard", to: "dashboard#show", as: :root
+
+      resources :users, only: %i[index show] do
+        post :lock, on: :member
+        post :unlock, on: :member
+        post :revoke_all_sessions, on: :member
+      end
+      resources :organizations, only: %i[index show] do
+        post :assign_plan, on: :member
+        post :remove_plan, on: :member
+      end
+      resources :memberships, only: %i[index show]
+      resources :invitations, only: %i[index show]
+      resources :sessions, only: %i[index show] do
+        post :revoke, on: :member
+      end
+      resources :events, only: %i[index show], path: "login-activity", controller: "session_events"
+    end
+
+    mount MissionControl::Jobs::Engine => "/admin/jobs", as: :admin_jobs
+  end
+
   # Versioned legal documents (SPEC M2.4).
   get "legal/terms",   to: "foundation/legal#terms",   as: :legal_terms
   get "legal/privacy", to: "foundation/legal#privacy", as: :legal_privacy

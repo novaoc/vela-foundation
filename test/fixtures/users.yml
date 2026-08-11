@@ -15,3 +15,9 @@ unconfirmed:
 oauth_only:
   email: oauth-only@example.com
   confirmed_at: <%= Time.utc(2026, 1, 1).to_fs(:db) %>
+
+admin:
+  email: operator@example.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, "correct horse battery") %>
+  confirmed_at: <%= Time.utc(2026, 1, 1).to_fs(:db) %>
+  admin: true

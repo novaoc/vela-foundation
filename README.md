@@ -35,8 +35,14 @@ Current foundation (more milestones land incrementally):
   Stripe Checkout and customer portal flows; Pay-managed webhook state;
   manual plan overrides that take precedence without hiding management of a
   coexisting subscription.
-- Coming next: admin, a Material Design 3
-  design system, and an optional storefront.
+- Operator-only administration at `/admin/dashboard`: read-only users,
+  organizations, memberships, invitations, device sessions, and login events;
+  explicit account lock/unlock, validated plan assignment, and session
+  revocation actions; Solid Queue visibility at `/admin/jobs`.
+- Per-device sign-in tracking records device/browser, IP, last activity, and
+  authentication method. The append-only event trail is retained for 12
+  months by default and swept daily by Solid Queue.
+- Coming next: a Material Design 3 design system and an optional storefront.
 
 ## Product identity
 
@@ -116,6 +122,38 @@ Profitable.ttm_revenue.to_readable
 Profitable.churn(in_the_last: 30.days).to_readable
 Profitable.active_subscribers.to_readable
 ```
+
+## Administration
+
+Application administration is separate from organization roles. An
+organization owner or admin has no access to `/admin`; only `User#admin?` does.
+There is deliberately no form, registration parameter, seed, or public route
+that grants this flag. Promote the first trusted operator from the Rails
+console:
+
+```ruby
+User.find_by!(email: "operator@example.com").update!(admin: true)
+```
+
+Admin resources are read-only except for the named actions shown on their
+detail pages. Plan changes validate against `PricingPlans.plans` and call the
+same `assign_pricing_plan!` / `remove_pricing_plan!` API used by console
+operators. Locking uses Devise's lockable API. Session revocation is enforced
+server-side on the affected device's next request, including revoke-all for
+account-takeover response.
+
+Every mutating request in the admin and jobs controllers writes one structured
+JSON event to the Rails log (`foundation.admin.mutation`) with action, actor
+ID, request ID/method, subject type/ID, and outcome. It never includes request
+parameters, tokens, credential values, or exception messages. Mission Control
+hides positional job arguments and filters keyed arguments/raw data through
+Rails' sensitive-parameter filter before rendering.
+
+The `sessions` integration creates a signed first-party device identifier at
+sign-in and stores device, IP, and login-event data. The default daily
+`SessionsSweepJob` bounds event retention to 12 months. Review the Privacy
+Policy's session/cookie language and your jurisdiction's requirements before
+launch.
 
 ## License
 
