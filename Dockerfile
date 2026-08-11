@@ -55,6 +55,35 @@ RUN bundle exec bootsnap precompile -j 1 app/ lib/
 RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 
 
+# Throwaway test stage: the production gate. Runs style, security, and test
+# checks against a disposable in-stage PostgreSQL cluster. Never part of the
+# final image. Build it with:
+#   docker build --target test .
+FROM build AS test
+
+ENV RAILS_ENV="test" \
+    BUNDLE_WITHOUT=""
+
+# Complete the gem set: the earlier stages exclude the development group.
+RUN bundle install
+
+# Provision a throwaway PostgreSQL cluster inside this stage. Debian creates
+# and initializes the "main" cluster at package install time.
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y postgresql && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+# The whole gate runs in a single layer because the PostgreSQL server only
+# lives for the duration of this RUN. Tests connect over the local socket as
+# root (peer auth), so no credentials are baked into the image.
+RUN service postgresql start && \
+    su postgres -c "createuser --superuser root" && \
+    ./bin/rails db:prepare && \
+    ./bin/rubocop && \
+    ./bin/bundler-audit check --update && \
+    ./bin/importmap audit && \
+    ./bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error && \
+    ./bin/rails test
 
 
 # Final stage for app image

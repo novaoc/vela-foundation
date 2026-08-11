@@ -16,6 +16,10 @@ module VelaFoundation
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
 
+    # Product identity and foundation-wide settings (config/foundation.yml),
+    # readable with string or symbol keys as Rails.configuration.x.foundation.
+    config.x.foundation = config_for(:foundation).with_indifferent_access
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files

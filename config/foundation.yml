@@ -1,0 +1,41 @@
+# Product identity and foundation-wide settings.
+#
+# Loaded in config/application.rb and exposed everywhere as
+# Rails.configuration.x.foundation (keys work as strings or symbols).
+# These are template placeholders: stamp a real identity here (or run
+# Vela's bin/rename, once it exists) before shipping an app.
+shared:
+  # Display name used in page titles, meta tags, and mail.
+  application_name: "Application"
+
+  # Absolute URL or asset path for the product logo. Blank renders a
+  # plain wordmark instead.
+  logo_url: ""
+
+  # Seed color the Material Design 3 token generator will derive light
+  # and dark palettes from.
+  brand_seed_color: "#6750A4"
+
+  # Fallbacks for pages that do not set their own title/description.
+  default_page_title: "Welcome"
+  default_page_description: "A production-ready Rails application."
+
+  # Absolute URL of the default Open Graph / social sharing image.
+  # Blank omits the og:image tag.
+  default_og_image_url: ""
+
+  # Public social profiles, e.g. { github: "https://github.com/example" }.
+  # Empty means no social links are rendered.
+  social_links: {}
+
+  # Operator mailboxes surfaced in support links and legal pages.
+  support_email: "support@example.com"
+  legal_email: "legal@example.com"
+
+  # Canonical production domain, no scheme. Used for sitemaps and
+  # absolute URLs in mail.
+  domain: "example.com"
+
+  # Feature flag for the storefront module (SPEC M8). Stays off until
+  # that milestone lands.
+  storefront_enabled: false

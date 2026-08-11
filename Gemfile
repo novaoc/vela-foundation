@@ -39,6 +39,21 @@ gem "thruster", require: false
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 1.2"
 
+# Foundation: operational healthcheck endpoint at /healthcheck [https://github.com/rameerez/allgood]
+gem "allgood"
+
+# Foundation: abort requests that exceed a wall-clock ceiling [https://github.com/zombocom/rack-timeout]
+gem "rack-timeout", require: "rack/timeout/base"
+
+# Foundation: restore real client IPs when served behind Cloudflare [https://github.com/modosc/cloudflare-rails]
+gem "cloudflare-rails"
+
+# Foundation: page titles, descriptions, and Open Graph tags [https://github.com/kpumuk/meta-tags]
+gem "meta-tags"
+
+# Foundation: sitemap generation for search engines [https://github.com/kjvarga/sitemap_generator]
+gem "sitemap_generator"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"

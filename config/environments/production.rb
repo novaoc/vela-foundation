@@ -30,6 +30,10 @@ Rails.application.configure do
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
   config.force_ssl = true
 
+  # Wall-clock ceiling per request: abort anything that runs longer than 15s
+  # so a stuck action cannot pin a Puma worker indefinitely.
+  config.middleware.insert_after ActionDispatch::RequestId, Rack::Timeout, service_timeout: 15
+
   # Skip http-to-https redirect for the default health check endpoint.
   # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
 
