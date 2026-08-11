@@ -12,6 +12,19 @@ class User < ApplicationRecord
   has_many :legal_acceptances, dependent: :destroy
   has_many :identities, dependent: :destroy
 
+  # Team workspaces (SPEC M4). A personal organization is created right
+  # after signup (config/initializers/organizations.rb); signups that come
+  # in through an organization invitation set skip_personal_organization so
+  # they join the inviting workspace instead of getting one of their own.
+  has_organizations
+  attr_accessor :skip_personal_organization
+
+  def should_create_personal_organization?
+    return false if skip_personal_organization
+
+    super
+  end
+
   # Virtual attribute backing the signup assent checkbox. Registration posts
   # "1" when the box is ticked; anything else (including a missing param —
   # hence allow_nil: false) fails validation, so assent is enforced

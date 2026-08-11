@@ -21,7 +21,16 @@ class Foundation::OauthSignupsController < ApplicationController
       LegalAcceptance.record!(user: @user, request: request, context: "oauth_signup")
       session.delete(SESSION_KEY)
       sign_in(@user)
-      redirect_to root_path, notice: "Welcome! Your account is ready."
+
+      # SPEC M4: an OAuth signup that started from an organization
+      # invitation joins that workspace (the personal one was skipped in
+      # build_user); the helper sets its own flash notice.
+      if @user.skip_personal_organization &&
+         (path = pending_invitation_acceptance_redirect_path_for(@user))
+        redirect_to path
+      else
+        redirect_to root_path, notice: "Welcome! Your account is ready."
+      end
     else
       render :new, status: :unprocessable_content
     end
@@ -53,6 +62,10 @@ class Foundation::OauthSignupsController < ApplicationController
   def build_user
     user = User.new(email: @pending["email"], legal_assent: params[:legal_assent])
     user.identities.build(provider: @pending["provider"], uid: @pending["uid"])
+    # SPEC M4.1: an invited signup joins the inviting workspace instead of
+    # getting a personal one (only when the invitation is for this address).
+    user.skip_personal_organization =
+      pending_organization_invitation&.for_email?(@pending["email"]) || false
     # The provider already verified this address (SPEC M3.3), so the account
     # starts confirmed and no confirmation email goes out.
     user.skip_confirmation!

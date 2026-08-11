@@ -23,6 +23,17 @@ Rails.application.routes.draw do
   get    "settings/connections",     to: "foundation/connections#show",    as: :settings_connections
   delete "settings/connections/:id", to: "foundation/connections#destroy", as: :settings_connection
 
+  # Organization invitation emails carry a signed, expiring token
+  # (SPEC M4.2); redeeming it lands on the public acceptance page. Declared
+  # before the engine mount so it wins over the engine's GET
+  # /invitations/:token.
+  get "invitations/mail/:signed_token",
+    to: "foundation/invitation_links#show", as: :organization_invitation_link
+
+  # Team workspaces: organizations, members, switching, and invitations
+  # (SPEC M4) — the organizations gem's engine, mounted at the root.
+  mount Organizations::Engine => "/"
+
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check

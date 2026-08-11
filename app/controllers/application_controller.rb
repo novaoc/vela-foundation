@@ -11,4 +11,27 @@ class ApplicationController < ActionController::Base
     redirect_back fallback_location: root_path,
       alert: "We could not verify you are human. Please complete the challenge and try again."
   end
+
+  # Expose the session-persisted active workspace as Current.organization
+  # for app code (SPEC M4.4). current_organization comes from the
+  # organizations gem, which validates membership on every resolution.
+  before_action :assign_current_attributes
+
+  private
+
+  def assign_current_attributes
+    Current.user = current_user
+    Current.organization = current_organization
+  end
+
+  # The public invitation page parks the invitation token in the session
+  # and sends existing users to sign in (SPEC M4.2); complete the join as
+  # soon as they authenticate.
+  def after_sign_in_path_for(resource)
+    if resource.is_a?(User) && (path = pending_invitation_acceptance_redirect_path_for(resource))
+      path
+    else
+      super
+    end
+  end
 end

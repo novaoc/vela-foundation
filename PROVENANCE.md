@@ -12,3 +12,5 @@ produced, by whom, and from which inputs. The reference-similarity gate
 | 2026-08-10 | M2 accounts + legal assent | clean-room agent a8bfa40e5cda88631 | SPEC.md M2/M9, Devise/nondisposable/turnstile public docs |
 | 2026-08-10 | simguard null-model additions: devise+nondisposable generator probes + migrated probe schema (documented uncomment transform) | orchestrator | public generators only |
 | 2026-08-10 | M3 OAuth + safe account linking | clean-room agent aaa0acf929934e1da | SPEC.md M3, omniauth public docs |
+| 2026-08-10 | M4 organizations | clean-room agent adf1499bf5209da6a | SPEC.md M4, organizations gem public docs |
+| 2026-08-10 | simguard null-model addition: organizations generator probe + migrated schema | orchestrator | public generators only |
