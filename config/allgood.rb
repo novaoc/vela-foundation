@@ -36,3 +36,10 @@ check "Disk-backed storage is writable" do
   service.delete(probe_key)
   make_sure written, "The #{service.class.name.demodulize} storage service should accept a small write"
 end
+
+unless Rails.env.test?
+  check "Enabled storefront payment configuration is ready" do
+    result = Foundation::Storefront::Readiness.call
+    make_sure result.ready?, result.errors.join("; ")
+  end
+end

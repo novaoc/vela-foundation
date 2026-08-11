@@ -36,6 +36,23 @@ shared:
   # absolute URLs in mail.
   domain: "example.com"
 
-  # Feature flag for the storefront module (SPEC M8). Stays off until
-  # that milestone lands.
-  storefront_enabled: false
+  # Exact storefront feature flag (SPEC M8): only the YAML boolean true
+  # enables its routes, navigation, models' entry points, and production
+  # readiness requirement. Any other value is disabled. Commerce-oriented
+  # apps generated from this foundation are ready to customize by default.
+  storefront_enabled: true
+
+  # M8 deliberately supports digital fulfillment only. Inventory can model
+  # limited licenses/capacity. A physical-goods app must first implement
+  # address collection, shipping/tax calculation, and matching legal terms;
+  # readiness rejects any unimplemented mode instead of silently shipping.
+  storefront_fulfillment_mode: "digital"
+
+  # A live production storefront refuses readiness until an operator has
+  # completed the commerce-specific legal/identity checklist in
+  # docs/STOREFRONT.md and deliberately changes this marker to true.
+  storefront_commerce_legal_reviewed: false
+
+  # Exact lowercase HTTPS hosts permitted for browser-rendered external
+  # product images. Empty (the safe default) requires Active Storage uploads.
+  storefront_external_image_hosts: []

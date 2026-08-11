@@ -34,6 +34,20 @@ Rails.application.routes.draw do
       resources :events, only: %i[index show], path: "login-activity", controller: "session_events"
     end
 
+    if Foundation.storefront_enabled?
+      scope path: "admin/storefront", module: "foundation/admin", as: "storefront_admin" do
+        resources :products, except: :destroy do
+          post :set_availability, on: :member
+          post :adjust_inventory, on: :member
+          post :import, on: :collection
+        end
+        resources :orders, only: %i[index show] do
+          post :cancel, on: :member
+        end
+        resources :payment_events, only: %i[index show]
+      end
+    end
+
     mount MissionControl::Jobs::Engine => "/admin/jobs", as: :admin_jobs
   end
 
@@ -66,8 +80,37 @@ Rails.application.routes.draw do
   get "invitations/mail/:signed_token",
     to: "foundation/invitation_links#show", as: :organization_invitation_link
 
+  if Foundation.storefront_enabled?
+    scope "storefront", module: "foundation/storefront", as: :storefront do
+      resources :products, only: %i[index show], param: :slug do
+        get :image, on: :member
+      end
+      resource :cart, only: :show do
+        post "items/:product_id", action: :add, as: :items
+        patch "items/:product_id", action: :update, as: :item
+        delete "items/:product_id", action: :remove
+      end
+      resource :checkout, only: %i[show create]
+      post "checkout/retry", to: "checkouts#retry", as: :checkout_retry
+      resources :orders, only: :show
+      get "simulate/:id", to: "simulator#show", as: :simulate,
+        constraints: ->(_request) { Foundation.storefront_simulator? }
+      post "simulate/:id", to: "simulator#create",
+        constraints: ->(_request) { Foundation.storefront_simulator? }
+    end
+  end
+
+
+  # Settlement remains reachable after the interactive storefront flag is
+  # disabled so already-created Checkout Sessions cannot become paid but
+  # unfulfillable. It exposes no catalog/admin UI and still requires a valid
+  # Stripe signature plus settlement readiness.
+  post "storefront/stripe/webhook", to: "foundation/storefront/stripe_webhooks#create",
+    as: :storefront_stripe_webhook
+
   # Team workspaces: organizations, members, switching, and invitations
-  # (SPEC M4) — the organizations gem's engine, mounted at the root.
+  # (SPEC M4) — the organizations gem's engine, mounted at the root. All
+  # application-owned storefront paths stay above this catch-all mount.
   mount Organizations::Engine => "/"
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
@@ -83,5 +126,9 @@ Rails.application.routes.draw do
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
   # Minimal landing page until the M7 marketing set replaces it.
-  root "foundation/home#show"
+  if Foundation.storefront_enabled?
+    root "foundation/storefront/products#index"
+  else
+    root "foundation/home#show"
+  end
 end

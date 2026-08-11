@@ -10,9 +10,37 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_11_042139) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_11_060003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "active_storage_attachments", force: :cascade do |t|
+    t.bigint "blob_id", null: false
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.bigint "record_id", null: false
+    t.string "record_type", null: false
+    t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
+    t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
+  end
+
+  create_table "active_storage_blobs", force: :cascade do |t|
+    t.bigint "byte_size", null: false
+    t.string "checksum"
+    t.string "content_type"
+    t.datetime "created_at", null: false
+    t.string "filename", null: false
+    t.string "key", null: false
+    t.text "metadata"
+    t.string "service_name", null: false
+    t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
+  end
+
+  create_table "active_storage_variant_records", force: :cascade do |t|
+    t.bigint "blob_id", null: false
+    t.string "variation_digest", null: false
+    t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
 
   create_table "identities", force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -404,6 +432,129 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_042139) do
     t.index ["session_id"], name: "index_sessions_events_on_session_id"
   end
 
+  create_table "storefront_checkout_attempts", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "key_digest", null: false
+    t.string "kind", null: false
+    t.index ["created_at"], name: "index_storefront_checkout_attempts_on_created_at"
+    t.index ["kind", "key_digest", "created_at"], name: "index_storefront_checkout_attempts_lookup"
+    t.check_constraint "kind::text = ANY (ARRAY['session'::character varying, 'ip'::character varying]::text[])", name: "storefront_checkout_attempts_kind_allowed"
+  end
+
+  create_table "storefront_line_items", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "currency", limit: 3, null: false
+    t.bigint "line_total_cents", null: false
+    t.string "name", null: false
+    t.bigint "order_id", null: false
+    t.bigint "product_id"
+    t.integer "quantity", null: false
+    t.string "sku", null: false
+    t.bigint "unit_price_cents", null: false
+    t.datetime "updated_at", null: false
+    t.index ["order_id", "product_id"], name: "index_storefront_line_items_on_order_id_and_product_id"
+    t.index ["order_id"], name: "index_storefront_line_items_on_order_id"
+    t.index ["product_id"], name: "index_storefront_line_items_on_product_id"
+    t.check_constraint "currency::text = upper(currency::text) AND currency::text ~ '^[A-Z]{3}$'::text", name: "storefront_line_items_currency_format"
+    t.check_constraint "length(btrim(name::text)) > 0 AND length(btrim(sku::text)) > 0", name: "storefront_line_items_snapshot_present"
+    t.check_constraint "line_total_cents = (unit_price_cents * quantity)", name: "storefront_line_items_total_matches"
+    t.check_constraint "quantity >= 1 AND quantity <= 10", name: "storefront_line_items_quantity_range"
+    t.check_constraint "unit_price_cents >= 0 AND line_total_cents >= 0", name: "storefront_line_items_prices_nonnegative"
+  end
+
+  create_table "storefront_orders", force: :cascade do |t|
+    t.string "acceptance_ip"
+    t.string "acceptance_user_agent"
+    t.datetime "canceled_at"
+    t.string "checkout_key_digest", null: false
+    t.datetime "checkout_started_at"
+    t.datetime "created_at", null: false
+    t.string "currency", limit: 3, null: false
+    t.string "email", null: false
+    t.datetime "fulfilled_at"
+    t.datetime "inventory_released_at"
+    t.datetime "legal_accepted_at", null: false
+    t.datetime "paid_at"
+    t.string "privacy_version", null: false
+    t.string "provider_payment_id"
+    t.string "public_reference", null: false
+    t.datetime "receipt_queued_at"
+    t.datetime "receipt_sent_at"
+    t.datetime "refunded_at"
+    t.datetime "reservation_expires_at", null: false
+    t.boolean "simulated", default: false, null: false
+    t.string "state", default: "pending", null: false
+    t.string "stripe_session_id"
+    t.bigint "subtotal_cents", null: false
+    t.string "terms_version", null: false
+    t.bigint "total_cents", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id"
+    t.index ["checkout_key_digest"], name: "index_storefront_orders_on_checkout_key_digest", unique: true
+    t.index ["provider_payment_id"], name: "index_storefront_orders_on_provider_payment_id", unique: true, where: "(provider_payment_id IS NOT NULL)"
+    t.index ["public_reference"], name: "index_storefront_orders_on_public_reference", unique: true
+    t.index ["state", "created_at"], name: "index_storefront_orders_on_state_and_created_at"
+    t.index ["state", "reservation_expires_at"], name: "index_storefront_orders_on_state_and_reservation_expires_at"
+    t.index ["stripe_session_id"], name: "index_storefront_orders_on_stripe_session_id", unique: true, where: "(stripe_session_id IS NOT NULL)"
+    t.index ["user_id", "created_at"], name: "index_storefront_orders_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_storefront_orders_on_user_id"
+    t.check_constraint "currency::text = upper(currency::text) AND currency::text ~ '^[A-Z]{3}$'::text", name: "storefront_orders_currency_format"
+    t.check_constraint "length(btrim(email::text)) > 0", name: "storefront_orders_email_present"
+    t.check_constraint "state::text = ANY (ARRAY['pending'::character varying::text, 'paid'::character varying::text, 'fulfilled'::character varying::text, 'canceled'::character varying::text, 'refunded'::character varying::text])", name: "storefront_orders_state_allowed"
+    t.check_constraint "subtotal_cents = total_cents", name: "storefront_orders_total_matches_subtotal"
+    t.check_constraint "subtotal_cents >= 0 AND total_cents >= 0", name: "storefront_orders_totals_nonnegative"
+  end
+
+  create_table "storefront_payment_events", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "error_code"
+    t.string "event_type", null: false
+    t.bigint "order_id"
+    t.string "payload_digest", null: false
+    t.datetime "processed_at"
+    t.string "provider", null: false
+    t.string "provider_event_id", null: false
+    t.string "provider_payment_id"
+    t.string "provider_session_id"
+    t.string "status", default: "received", null: false
+    t.datetime "updated_at", null: false
+    t.index ["order_id"], name: "index_storefront_payment_events_on_order_id"
+    t.index ["provider", "provider_event_id"], name: "idx_on_provider_provider_event_id_6a77f7d194", unique: true
+    t.index ["provider_payment_id", "created_at"], name: "idx_on_provider_payment_id_created_at_39d3bb7d27"
+    t.index ["provider_session_id", "created_at"], name: "idx_on_provider_session_id_created_at_c5965c0dc6"
+    t.index ["status", "created_at"], name: "index_storefront_payment_events_on_status_and_created_at"
+    t.check_constraint "length(btrim(provider_event_id::text)) > 0", name: "storefront_payment_events_id_present"
+    t.check_constraint "status::text = ANY (ARRAY['received'::character varying::text, 'processed'::character varying::text, 'rejected'::character varying::text, 'ignored'::character varying::text])", name: "storefront_payment_events_status_allowed"
+  end
+
+  create_table "storefront_products", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.string "currency", limit: 3, default: "USD", null: false
+    t.text "description", default: "", null: false
+    t.string "image_url"
+    t.integer "inventory_quantity", default: 0, null: false
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.bigint "price_cents", null: false
+    t.string "sku", null: false
+    t.string "slug", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active", "position"], name: "index_storefront_products_on_active_and_position"
+    t.index ["sku"], name: "index_storefront_products_on_sku", unique: true
+    t.index ["slug"], name: "index_storefront_products_on_slug", unique: true
+    t.check_constraint "\"position\" <= 1000000", name: "storefront_products_position_bounded"
+    t.check_constraint "\"position\" >= 0", name: "storefront_products_position_nonnegative"
+    t.check_constraint "currency::text = upper(currency::text) AND currency::text ~ '^[A-Z]{3}$'::text", name: "storefront_products_currency_format"
+    t.check_constraint "inventory_quantity <= 1000000", name: "storefront_products_inventory_bounded"
+    t.check_constraint "inventory_quantity >= 0", name: "storefront_products_inventory_nonnegative"
+    t.check_constraint "length(btrim(name::text)) > 0", name: "storefront_products_name_present"
+    t.check_constraint "length(btrim(sku::text)) > 0", name: "storefront_products_sku_present"
+    t.check_constraint "length(btrim(slug::text)) > 0", name: "storefront_products_slug_present"
+    t.check_constraint "price_cents <= 999999999", name: "storefront_products_price_bounded"
+    t.check_constraint "price_cents >= 0", name: "storefront_products_price_nonnegative"
+  end
+
   create_table "users", force: :cascade do |t|
     t.boolean "admin", default: false, null: false
     t.datetime "confirmation_sent_at"
@@ -426,6 +577,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_042139) do
     t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true
   end
 
+  add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "identities", "users"
   add_foreign_key "legal_acceptances", "users"
   add_foreign_key "organizations_allowlist_entries", "organizations_organizations", column: "organization_id"
@@ -447,4 +600,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_042139) do
   add_foreign_key "pay_payment_methods", "pay_customers", column: "customer_id"
   add_foreign_key "pay_subscriptions", "pay_customers", column: "customer_id"
   add_foreign_key "sessions", "users"
+  add_foreign_key "storefront_line_items", "storefront_orders", column: "order_id", on_delete: :cascade
+  add_foreign_key "storefront_line_items", "storefront_products", column: "product_id", on_delete: :nullify
+  add_foreign_key "storefront_orders", "users", on_delete: :nullify
+  add_foreign_key "storefront_payment_events", "storefront_orders", column: "order_id", on_delete: :nullify
 end

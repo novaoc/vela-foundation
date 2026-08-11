@@ -34,3 +34,13 @@ repository license is preserved separately at
 
 The license text is preserved at `vendor/licenses/esbuild-MIT.txt`. esbuild is
 not part of the application runtime or the generated token bundle.
+
+## Ruby CSV
+
+- Project: `ruby/csv`
+- Gem: `csv` 3.3.6
+- Use: strict, bounded parsing for the operator product importer
+- License: Ruby License or BSD-2-Clause
+
+The bundled BSD-2-Clause text is preserved at
+`vendor/licenses/csv-BSD-2-Clause.txt`.

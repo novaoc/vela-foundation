@@ -7,7 +7,7 @@ module Foundation
 
       module_function
 
-      def write(action:, actor:, request:, subject:, outcome:, error_class: nil)
+      def write(action:, actor:, request:, subject:, outcome:, error_class: nil, details: nil)
         entry = {
           event: EVENT_NAME,
           action: action,
@@ -17,7 +17,8 @@ module Foundation
           subject_type: subject[:type],
           subject_id: subject[:id],
           outcome: outcome,
-          error_class: error_class
+          error_class: error_class,
+          details: details
         }.compact
 
         Rails.logger.info(entry.to_json)

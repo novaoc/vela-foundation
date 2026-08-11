@@ -13,6 +13,9 @@ class FoundationConfigurationTest < ActiveSupport::TestCase
     legal_email
     domain
     storefront_enabled
+    storefront_fulfillment_mode
+    storefront_commerce_legal_reviewed
+    storefront_external_image_hosts
   ].freeze
 
   test "foundation config is loaded with indifferent access" do
@@ -35,6 +38,9 @@ class FoundationConfigurationTest < ActiveSupport::TestCase
 
     assert_equal "Application", foundation[:application_name]
     assert_match(/\A#\h{6}\z/, foundation[:brand_seed_color])
-    assert_equal false, foundation[:storefront_enabled]
+    assert_equal true, foundation[:storefront_enabled]
+    assert_equal "digital", foundation[:storefront_fulfillment_mode]
+    assert_equal false, foundation[:storefront_commerce_legal_reviewed]
+    assert_equal [], foundation[:storefront_external_image_hosts]
   end
 end

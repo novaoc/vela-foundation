@@ -1,15 +1,14 @@
 require "test_helper"
 
 class MaterialDesignPagesTest < ActionDispatch::IntegrationTest
-  test "public landing exposes the complete marketing set and public shell" do
+  test "public landing exposes the storefront catalog and public shell" do
     get root_path
 
     assert_response :success
     assert_select "a.md-skip-link[href='#main-content']", text: "Skip to main content"
-    assert_select "section.md-hero"
-    assert_select ".md-feature", count: 3
-    assert_select ".md-pricing-grid article", count: PricingPlans.plans.size
-    assert_select ".md-faq details", minimum: 3
+    assert_select "h1", text: "Shop"
+    assert_select "a[href='#{storefront_cart_path}']", minimum: 1
+    assert_select ".md-pricing-grid", count: 0
     assert_select "footer a", text: "Terms of Service"
   end
 
@@ -34,7 +33,7 @@ class MaterialDesignPagesTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "nav.md-navigation", count: 1
-    assert_select "nav.md-navigation a span", text: "Home"
+    assert_select "nav.md-navigation a", text: /Shop/
     assert_select "nav.md-navigation form button.md-navigation__signout", text: "Sign out", count: 1
     assert_select "main#main-content.md-main"
   end

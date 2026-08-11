@@ -20,6 +20,11 @@ module VelaFoundation
     # readable with string or symbol keys as Rails.configuration.x.foundation.
     config.x.foundation = config_for(:foundation).with_indifferent_access
 
+    # Storefront uploads are ordinary admin-only multipart fields. Disable
+    # Active Storage's generic public/direct-upload routes; catalog images are
+    # served only through the bounded active-product endpoint.
+    config.active_storage.draw_routes = false
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files

@@ -22,8 +22,16 @@ module Foundation
       }
     end
 
+    def foundation_admin_audit_bulk_subject(type)
+      @foundation_admin_audit_subject = { type: type.to_s, id: nil }
+    end
+
     def foundation_admin_audit_outcome(outcome)
       @foundation_admin_audit_outcome = outcome.to_s
+    end
+
+    def foundation_admin_audit_details(details)
+      @foundation_admin_audit_details = details.slice(:created, :updated, :errors)
     end
 
     def audit_foundation_admin_mutation
@@ -42,7 +50,8 @@ module Foundation
           request: request,
           subject: foundation_admin_audit_subject_from_request,
           outcome: @foundation_admin_audit_outcome || inferred_foundation_admin_audit_outcome(error_class),
-          error_class: error_class
+          error_class: error_class,
+          details: @foundation_admin_audit_details
         )
       end
     end

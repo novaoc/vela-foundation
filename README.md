@@ -49,7 +49,10 @@ Current foundation (more milestones land incrementally):
   extra-large.
 - Production-ready public marketing, authentication, organization, billing,
   and admin shells, with branded static error pages and no runtime asset CDN.
-- Coming next: the optional storefront module.
+- Optional, default-on digital storefront: guest catalog/cart/checkout,
+  server-priced Stripe Checkout, signed receipts, webhook/reconciliation
+  fulfillment, preview-only payment simulation, strict inventory reservation,
+  Active Storage images, bounded CSV import, and operator-only administration.
 
 ## Product identity
 
@@ -157,6 +160,42 @@ Profitable.ttm_revenue.to_readable
 Profitable.churn(in_the_last: 30.days).to_readable
 Profitable.active_subscribers.to_readable
 ```
+
+## Storefront setup
+
+The complete deploy and operations contract is in
+[`docs/STOREFRONT.md`](docs/STOREFRONT.md). In short,
+`storefront_enabled: true` (the literal YAML boolean) enables catalog, cart,
+checkout, receipt, and storefront-admin routes and UI. Every other value
+disables those interactive surfaces. The verified settlement webhook remains
+mounted after disable so Checkout Sessions created before a flag change cannot
+become paid but unfulfillable; drain them before removing Stripe credentials.
+
+Outside preview, configure `STOREFRONT_STRIPE_SECRET_KEY` (or the existing
+`STRIPE_PRIVATE_KEY`), a distinct `STOREFRONT_STRIPE_WEBHOOK_SECRET`, and
+`STOREFRONT_STRIPE_MODE=live` or `test`. Production defaults to `live` and
+rejects test/live prefix mismatches and obvious placeholders. Register the
+storefront endpoint `/storefront/stripe/webhook` separately from Pay's
+organization-subscription endpoint `/pay/webhooks/stripe`; their signing
+secrets and ledgers have different responsibilities. Never put keys in this
+repository.
+
+`VELA_HOLODEX_PREVIEW=1` defaults to a conspicuous local simulator with no
+Stripe call and no payment fields. An injected preview can opt into real
+Stripe test mode only with `STOREFRONT_PREVIEW_PAYMENT_MODE=stripe`, test keys,
+and a signing secret. Live Stripe mode is rejected in preview.
+
+This M8 module is intentionally digital-only
+(`storefront_fulfillment_mode: digital`): inventory means limited licenses or
+capacity. It does not collect a shipping address or claim to calculate tax.
+Before selling physical goods, implement address validation, carrier/fulfillment
+workflows, tax, regional restrictions, and corresponding legal language.
+Review every `TODO-OPERATOR` in Terms and Privacy with qualified counsel; the
+included text is a starting point, not legal advice.
+Production/live readiness also rejects the template identity and the default
+`storefront_commerce_legal_reviewed: false` marker. External product images
+are disabled by default; explicitly allow only controlled HTTPS CDN hosts in
+`storefront_external_image_hosts`, or use validated uploads.
 
 ## Administration
 
