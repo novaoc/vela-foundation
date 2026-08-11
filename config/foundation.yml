@@ -2,8 +2,9 @@
 #
 # Loaded in config/application.rb and exposed everywhere as
 # Rails.configuration.x.foundation (keys work as strings or symbols).
-# These are template placeholders: stamp a real identity here (or run
-# Vela's bin/rename, once it exists) before shipping an app.
+# These are template placeholders. Run bin/rename to stamp a real
+# identity across this file, the README, and the web manifest before
+# shipping an app; editing them here by hand works too.
 shared:
   # Display name used in page titles, meta tags, and mail.
   application_name: "Application"

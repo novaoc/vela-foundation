@@ -1,75 +1,186 @@
-# Vela Foundation
+<!-- foundation:identity -->
+# Application
 
-Vela's production Rails starter template. New applications are created by
-cloning this repository, stamping a product identity, and building on top —
-so everything here is meant to hold up in production from day one.
+A production-ready Rails application.
 
-Current foundation (more milestones land incrementally):
+- Site: https://example.com
+- Support: support@example.com
+<!-- /foundation:identity -->
 
-- Rails 8.1, PostgreSQL everywhere, propshaft + importmap + Hotwire,
-  Solid Queue/Cache/Cable, Tailwind CSS v4, Thruster.
-- Production gates baked into the Docker image: a `test` build stage runs
-  RuboCop, bundler-audit, importmap audit, Brakeman, and the full test suite
-  against a throwaway in-stage PostgreSQL cluster.
-- Operational healthcheck at `/healthcheck` (database, migrations, queue
-  liveness, storage writability) alongside the standard `/up` boot check.
-- Request timeouts (`rack-timeout`, 15s production ceiling) and real client
-  IPs behind Cloudflare (`cloudflare-rails`).
-- SEO plumbing: `meta-tags` defaults driven from `config/foundation.yml`,
-  plus a `sitemap_generator` setup (`bin/rails sitemap:refresh`).
-- Accounts (Devise): registration, sign-in, password reset, required email
-  confirmation, lockout after repeated failures, 12-character password
-  minimum. Cloudflare Turnstile guards registration and password reset when
-  `CLOUDFLARE_TURNSTILE_SITE_KEY`/`CLOUDFLARE_TURNSTILE_SECRET_KEY` are set;
-  disposable email domains are rejected (`nondisposable`).
-- Versioned legal assent: fresh Terms of Service and Privacy Policy pages at
-  `/legal/terms` and `/legal/privacy`; signup requires an explicit checkbox
-  and stores the accepted versions with timestamp, IP, and user agent.
-  The documents are a starting point, **not legal advice** — search them for
-  `TODO-OPERATOR` and review with counsel before launch.
-- Hosted-preview affordance: when `VELA_HOLODEX_PREVIEW=1` and no
-  `SMTP_ADDRESS` is configured, new accounts are confirmed immediately
-  (previews cannot send mail); with a relay, normal confirmation applies.
-- Organization-scoped subscription billing: configurable Free, Pro, and
-  Enterprise tiers with monthly/yearly prices and queryable entitlements;
-  Stripe Checkout and customer portal flows; Pay-managed webhook state;
-  manual plan overrides that take precedence without hiding management of a
-  coexisting subscription.
-- Operator-only administration at `/admin/dashboard`: read-only users,
-  organizations, memberships, invitations, device sessions, and login events;
-  explicit account lock/unlock, validated plan assignment, and session
-  revocation actions; Solid Queue visibility at `/admin/jobs`.
-- Per-device sign-in tracking records device/browser, IP, last activity, and
-  authentication method. The append-only event trail is retained for 12
-  months by default and swept daily by Solid Queue.
-- Rails-native Material Design 3 system: deterministic light/dark semantic
-  tokens generated from the configured brand seed, accessible ERB components,
-  local subset Material Symbols Rounded, persisted system/light/dark theme,
-  and exact adaptive navigation/layout classes from compact through
-  extra-large.
-- Production-ready public marketing, authentication, organization, billing,
-  and admin shells, with branded static error pages and no runtime asset CDN.
-- Optional, default-on digital storefront: guest catalog/cart/checkout,
-  server-priced Stripe Checkout, signed receipts, webhook/reconciliation
-  fulfillment, preview-only payment simulation, strict inventory reservation,
-  Active Storage images, bounded CSV import, and operator-only administration.
+The block above is the product identity. `bin/rename` rewrites it, together
+with `config/foundation.yml`; everything else in this file documents the
+foundation the application is built on.
 
-## Product identity
+## What this is
 
-`config/foundation.yml` holds the product identity: application name, logo,
-brand seed color, default page title/description, social links, support and
-legal mailboxes, domain, and feature flags. It is available everywhere as
-`Rails.configuration.x.foundation` (string or symbol keys). Edit it first
-when turning the template into a real product.
+A Rails 8.1 starter template, MIT licensed, with no proprietary dependencies.
+New applications are generated from it, stamped with an identity, and then
+built on. Every file here is copied into the generated application, so there
+is no hidden runtime, no vendor SDK, and nothing to license.
 
-## Material Design 3
+## What the foundation provides
 
-The design system is documented in
-[`docs/MATERIAL_DESIGN_3.md`](docs/MATERIAL_DESIGN_3.md), including component
-usage, accessibility rules, adaptive breakpoints, theme behavior, and brand
-re-seeding. Generated color CSS and JSON are committed, so production needs no
-Node runtime. To intentionally regenerate after changing
-`brand_seed_color`:
+**Accounts and legal assent.** Devise email/password authentication with
+required email confirmation, lockout after repeated failures, and a
+12-character password minimum. Cloudflare Turnstile guards registration and
+password reset when its keys are present; disposable email domains are
+rejected. Signup requires an explicit checkbox assent and stores the accepted
+Terms and Privacy versions with a timestamp, request IP, and user agent.
+Versioned documents live at `/legal/terms` and `/legal/privacy`.
+
+**OAuth with safe linking.** Google and GitHub sign-in with CSRF-protected
+request phases. Identities are stored per provider and uid. An OAuth sign-in
+whose email matches an existing local account is never auto-merged — the
+person is asked to sign in with their existing credentials and link the
+provider explicitly from their settings. Unlinking is refused when it would
+leave an account with no way to sign in. First-time OAuth users record legal
+assent on an interstitial before any account is created.
+
+**Organizations, roles, and invitations.** Every signup creates a personal
+organization unless it arrives through an invitation. Users create additional
+organizations, switch between them, rename, and delete them. Roles are owner,
+admin, and member. Invitations are emailed with signed, expiring tokens and
+route a signed-out recipient through signup into the inviting organization.
+Ownership transfer, member removal, and leaving are all guarded so an
+organization cannot lose its last owner. `Current.organization` is the
+session-persisted scope for application code.
+
+**Billing and plans.** Free, Pro, and Enterprise example tiers with monthly
+and yearly prices and queryable entitlements, defined in one initializer. A
+public pricing page with an interval toggle, Stripe Checkout, a customer
+portal link, and webhook-driven subscription state through Pay. The
+organization is the billable entity. Operators can assign a plan manually;
+manual assignment takes precedence over a subscription, is marked in the UI,
+and still exposes billing management when a live subscription coexists.
+
+**Administration.** An operator console at `/admin/dashboard`, gated on
+`User#admin?` alone — organization roles grant no access, and no form, seed,
+or route sets that flag. Users, organizations, memberships, invitations,
+device sessions, login events, products, and orders are browsable; account
+lock/unlock, plan assignment, session revocation, and storefront actions are
+the named mutations. Every mutation writes a structured audit event to the
+Rails log with the actor id. Solid Queue is visible at `/admin/jobs`.
+
+**Material Design 3.** Light and dark semantic tokens generated from one
+brand seed color, a typography and shape scale, elevation and state layers,
+and Tailwind utilities mapped onto the tokens. Components are ERB partials
+plus Stimulus controllers: buttons, cards, text fields, selects, checkboxes
+and switches, chips, focus-trapped dialogs, menus, snackbars, top app bar,
+and navigation that swaps between bottom bar, rail, and drawer across the
+five breakpoints. Icons come only from a locally subset Material Symbols
+Rounded font — no icon CDN, no runtime font fetch. Accessibility rules
+(48px targets, visible focus, AA contrast, reduced motion, 200% zoom) are
+part of the contract. See
+[`docs/MATERIAL_DESIGN_3.md`](docs/MATERIAL_DESIGN_3.md).
+
+**Guest-first storefront** (optional, enabled by default). A catalog,
+cart, and checkout that require no account: checkout collects and validates
+an email, caps quantity, and shows Terms and Privacy links. Amounts are
+always computed server-side from product prices. Fulfillment happens only
+through the verified Stripe webhook, which checks signature, session, client
+reference, amount, and currency idempotently. Receipts are reachable by the
+owning user or through a signed 24-hour token. Admin adds product CRUD with
+validated image uploads and a bounded CSV import. The module is digital-only
+by design. See [`docs/STOREFRONT.md`](docs/STOREFRONT.md).
+
+**Hosted preview runtime.** A deploy-time flag turns the application into a
+disposable preview: local disk storage, `X-Robots-Tag: noindex` on every
+response, in-memory mail with automatic account confirmation, and a clearly
+labeled checkout simulator that moves no money and collects no card data.
+Preview requires no Stripe configuration. See
+[`docs/HOSTED_RUNTIME.md`](docs/HOSTED_RUNTIME.md).
+
+**Production gates.** The Docker `test` stage runs RuboCop, bundler-audit,
+importmap audit, Brakeman, and the full test suite against a throwaway
+PostgreSQL cluster inside the image. `/healthcheck` reports database
+connectivity, pending migrations, queue liveness, storage writability, mail
+mode, and Stripe readiness without contacting Stripe. Request timeouts and
+real client IPs behind Cloudflare are configured.
+
+## Quickstart
+
+Run `bin/rename` first — it is the only command a fresh application needs
+before it boots:
+
+```sh
+bin/rename --name "Acme Shop" \
+  --description "Licenses for the Acme toolchain." \
+  --domain acme.example \
+  --support-email support@acme.example
+```
+
+It validates its arguments, stamps `config/foundation.yml` and the identity
+block in this README, prints exactly what changed, and lists what an operator
+still has to configure. It is safe to run again: the same arguments produce
+byte-identical files. `--check` reports the plan without writing. `--module
+AcmeShop` additionally renames the Ruby application module in
+`config/application.rb`; without that flag the script touches nothing but
+configuration and documentation. The web app manifest, page titles, mail
+identity, and legal pages read `config/foundation.yml` at runtime, so they
+follow automatically.
+
+Then, with a local Ruby (see `.ruby-version`) and PostgreSQL:
+
+```sh
+bin/setup        # install gems, prepare databases, start the dev server
+bin/rails test   # run the test suite
+bin/ci           # full local gate: style, security audits, tests
+```
+
+Without a local Ruby, `bin/dx` runs any command in a container with the repo
+mounted, a persistent bundle volume, and a `vf-pg` PostgreSQL container on
+the `vf-net` Docker network:
+
+```sh
+./bin/dx bundle install
+./bin/dx bin/rails db:prepare test
+./bin/dx bundle exec rubocop
+```
+
+The authoritative gate needs nothing but Docker:
+
+```sh
+docker build --target test .
+```
+
+Seeds are optional. The application boots and serves every page with an empty
+database. `bin/rails db:seed` adds a small demo catalog, and only in
+development or a hosted preview — it refuses to run in a real deployment.
+There is deliberately no seeded administrator: promote the first operator
+from the console (see [Administration](#administration)).
+
+## Product identity and branding
+
+`config/foundation.yml` is the single source of product identity:
+application name, logo, brand seed color, default page title and
+description, Open Graph image, social links, support and legal mailboxes,
+domain, and the storefront feature flags. It is available everywhere as
+`Rails.configuration.x.foundation` with string or symbol keys.
+
+The web app manifest is served at `/manifest.webmanifest` and built from that
+file by `Foundation::WebManifest`, so its name, description, theme color, and
+background color follow the configuration instead of being hardcoded. No
+service worker is registered: the foundation ships no offline cache, so it
+cannot serve a stale authenticated page.
+
+`public/icon.svg` is a placeholder mark generated from `brand_seed_color`
+alone — a full-bleed background with a centered ring in whichever of white or
+black contrasts better with the seed. It is square and maskable: everything
+visible stays inside the guaranteed-safe centered circle. Regenerate it after
+changing the seed:
+
+```sh
+bin/rails foundation:icon
+```
+
+A test fails if the committed icon does not match the configured seed, so the
+drift cannot ship silently. To use a real mark, replace `public/icon.svg`
+with your own square SVG (keep the artwork inside the centered 80% circle so
+Android's mask cannot crop it) and stop running the task. Add a PNG at the
+same path only if you also update the manifest entry's `type` and `sizes`.
+
+Changing `brand_seed_color` also requires regenerating the Material Design 3
+tokens, which are committed so production needs no Node runtime:
 
 ```sh
 cd tools/material
@@ -80,105 +191,144 @@ tools/material/generate_symbols.sh # only when the symbol inventory changes
 bin/rails tailwindcss:build
 ```
 
-Offline template-renaming environments with Node can run
-`node tools/material/dist/generate_tokens.mjs` without installing packages;
-the committed bundle contains the pinned color algorithm and has a `--check`
+Offline environments with Node can run `node
+tools/material/dist/generate_tokens.mjs` without installing packages; the
+committed bundle contains the pinned color algorithm and has a `--check`
 mode. `npm test` verifies the reviewed bundle against a fresh pinned build.
-
-Material Color Utilities and the local Material Symbols subset are
-Apache-2.0 licensed; exact versions, revisions, hashes, and notices are in
-[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). The application remains
-MIT licensed.
-
-## Quickstart
-
-With a local Ruby (see `.ruby-version`) and PostgreSQL:
-
-```sh
-bin/setup        # installs gems, prepares databases, starts the dev server
-bin/rails test   # run the test suite
-bin/ci           # full local gate: style, security audits, tests
-```
-
-Without local Ruby, `bin/dx` runs any command inside a containerized dev
-loop (repo mounted into a Ruby container with a persistent bundle volume and
-a `vf-pg` PostgreSQL container on the `vf-net` Docker network):
-
-```sh
-./bin/dx bundle install
-./bin/dx bin/rails db:prepare test
-./bin/dx bundle exec rubocop
-```
-
-The authoritative gate is the Docker `test` stage, which needs nothing but
-Docker:
-
-```sh
-docker build --target test .
-```
+Material Color Utilities and the local Material Symbols subset are Apache-2.0
+licensed; exact versions, revisions, hashes, and notices are in
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). The application itself
+remains MIT licensed.
 
 ## Self-hosting
 
-The production image is the standard Rails multi-stage `Dockerfile`
-(Thruster + Puma on port 80). Provide `RAILS_MASTER_KEY` (or
-`SECRET_KEY_BASE`), a PostgreSQL server, and your domain in
-`config/foundation.yml`; `docker build .` then produces a deployable image
-for Kamal or any container host. Asset precompilation needs no secrets
-(`SECRET_KEY_BASE_DUMMY=1` is used at build time). Point your monitoring at
-`/healthcheck`.
+The production image is the standard Rails multi-stage `Dockerfile` (Thruster
+and Puma on port 80). Provide `RAILS_MASTER_KEY` (or `SECRET_KEY_BASE`), a
+PostgreSQL server, and your domain in `config/foundation.yml`; `docker build .`
+produces a deployable image for Kamal or any container host. Asset
+precompilation needs no secrets (`SECRET_KEY_BASE_DUMMY=1` is used at build
+time). Point monitoring at `/healthcheck`.
 
-The default runtime needs only one `DATABASE_URL`. Solid Queue, Solid Cache,
-and Solid Cable share that primary database, and their tables are installed by
-the primary migration stream. A larger deployment may independently provide
-`QUEUE_DATABASE_URL`, `CACHE_DATABASE_URL`, or `CABLE_DATABASE_URL`; only the
-named adapters with an override move away from primary. Run a separate
-`bin/jobs` process by default. Setting `SOLID_QUEUE_IN_PUMA=1` runs the queue
-supervisor inside Puma for a single-server deployment; `0` disables it and any
-other value refuses to boot.
+### Environment
 
-Set `APP_HOST` to the public bare host or absolute origin used by every emailed
-link, controller-generated absolute URL, and Stripe return URL. Paths, queries,
-fragments, credentials, and control characters are rejected, and request `Host`
-headers are never used as the canonical origin. Links are HTTPS unless the host
-is loopback (`localhost`, `*.localhost`, `127.0.0.0/8`, `::1`, `0.0.0.0`);
-preview and production require HTTPS outright. In production outside preview,
-`APP_HOST` must be the `domain` from `config/foundation.yml` or a subdomain of
-it, so an injected value cannot move payment or mail links off your domain.
+| Variable | Required | Purpose |
+|---|---|---|
+| `RAILS_MASTER_KEY` / `SECRET_KEY_BASE` | yes | Credential decryption and session signing. |
+| `DATABASE_URL` | yes | PostgreSQL. The only database the default topology needs. |
+| `APP_HOST` | recommended | Public host or absolute origin for every emailed link, absolute URL, and Stripe return URL. |
+| `QUEUE_DATABASE_URL` / `CACHE_DATABASE_URL` / `CABLE_DATABASE_URL` | no | Move one Solid adapter off the primary database. |
+| `SOLID_QUEUE_IN_PUMA` | no | Exactly `1` runs the queue supervisor inside Puma; `0` or unset uses `bin/jobs`. |
+| `ACTIVE_STORAGE_SERVICE` | in production | Name of a non-disk service in `config/storage.yml`. |
+| `SMTP_ADDRESS` | for mail | Relay host; its presence selects SMTP delivery. |
+| `SMTP_PORT` | no | Defaults to 587. |
+| `SMTP_USERNAME` / `SMTP_PASSWORD` | no | Must be supplied together; plain auth is added only then. |
+| `SMTP_ENABLE_STARTTLS_AUTO` | no | Exactly `true` or `false`; defaults to `true`. |
+| `MAILER_FROM` | recommended | One mailbox, e.g. `Product <noreply@example.com>`. Defaults to `support_email`. |
+| `STRIPE_PUBLIC_KEY` / `STRIPE_PRIVATE_KEY` / `STRIPE_SIGNING_SECRET` | for subscriptions | Pay configuration; webhooks post to `/pay/webhooks/stripe`. |
+| `STRIPE_PRO_MONTHLY_PRICE_ID` / `STRIPE_PRO_YEARLY_PRICE_ID` | for subscriptions | Price IDs for the Pro tier. |
+| `STRIPE_ENTERPRISE_MONTHLY_PRICE_ID` / `STRIPE_ENTERPRISE_YEARLY_PRICE_ID` | for subscriptions | Price IDs for the Enterprise tier. |
+| `STOREFRONT_STRIPE_SECRET_KEY` | for the storefront | Falls back to `STRIPE_PRIVATE_KEY`. |
+| `STOREFRONT_STRIPE_WEBHOOK_SECRET` | for the storefront | Distinct from the Pay signing secret; endpoint is `/storefront/stripe/webhook`. |
+| `STOREFRONT_STRIPE_MODE` | for the storefront | `live` or `test`; production defaults to `live` and rejects prefix mismatches. |
+| `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` | for Google sign-in | Omitting the pair hides the button. |
+| `GITHUB_OAUTH_CLIENT_ID` / `GITHUB_OAUTH_CLIENT_SECRET` | for GitHub sign-in | Omitting the pair hides the button. |
+| `CLOUDFLARE_TURNSTILE_SITE_KEY` / `CLOUDFLARE_TURNSTILE_SECRET_KEY` | recommended | Bot challenge on registration and password reset. |
+| `RAILS_LOG_LEVEL`, `WEB_CONCURRENCY`, `RAILS_MAX_THREADS`, `JOB_CONCURRENCY` | no | Standard runtime tuning. |
+| `VELA_HOLODEX_PREVIEW` | never set by hand | Injected by the hosting runtime to mark a disposable preview. |
 
-Without `APP_HOST`, deployed environments use that same `domain`. Local
-`bin/rails server` development instead defaults to `http://localhost:3000` so
-confirmation and password-reset links stay on your machine; set `APP_HOST` when
-you want development to generate a real hostname.
+`APP_HOST` accepts a bare host or an absolute origin, and rejects paths,
+queries, fragments, credentials, and control characters. Request `Host`
+headers are never used as the canonical origin. Links are HTTPS unless the
+host is loopback; production and preview require HTTPS. In production outside
+preview, `APP_HOST` must equal the `domain` in `config/foundation.yml` or be
+a subdomain of it, so an injected value cannot move payment or mail links off
+your domain. Without `APP_HOST`, deployed environments use that `domain`;
+local `bin/rails server` uses `http://localhost:3000`.
 
-Provider-neutral mail configuration uses `SMTP_ADDRESS`, `SMTP_PORT` (587 by
-default), optional paired `SMTP_USERNAME` / `SMTP_PASSWORD`, exact
-`SMTP_ENABLE_STARTTLS_AUTO=true|false`, and `MAILER_FROM`. SMTP wins when it is
-present. Without SMTP, hosted preview uses the in-memory adapter; otherwise the
-application's explicit production provider remains active. `MAILER_FROM` must
-be one mailbox, such as `Product <noreply@example.com>`; both From and Reply-To
-are forced to that same application identity. Delivery failures are raised in
-every mode except the offline in-memory preview.
+One `DATABASE_URL` is a complete configuration: Solid Queue, Solid Cache, and
+Solid Cable share the primary database and their tables are installed by the
+primary migration stream. Run `bin/jobs` as a separate process unless you set
+`SOLID_QUEUE_IN_PUMA=1`. The full environment, health, storage, and mail
+contract is in [`docs/HOSTED_RUNTIME.md`](docs/HOSTED_RUNTIME.md); billing
+details are in [`docs/STOREFRONT.md`](docs/STOREFRONT.md) and
+`config/initializers/pricing_plans.rb`.
 
-Outside hosted preview, set `ACTIVE_STORAGE_SERVICE` to a non-disk service
-defined in `config/storage.yml`. A production boot stays secret-free for asset
-compilation, but `/healthcheck` rejects the local fallback until cloud storage
-is configured and writable. See [`docs/HOSTED_RUNTIME.md`](docs/HOSTED_RUNTIME.md)
-for the complete environment, preview, health, and deployment contract.
+## Hosted preview
 
-## Billing setup
+`VELA_HOLODEX_PREVIEW=1` is set by the hosting runtime, never by the
+application. It marks a daily-wiped, no-egress preview and has fixed
+consequences: Active Storage uses local disk, every response carries
+`X-Robots-Tag: noindex`, checkout uses the labeled local simulator instead of
+Stripe, and — without an SMTP relay — mail stays in memory and new accounts
+are confirmed immediately. Supplying `SMTP_ADDRESS` restores ordinary
+confirmation mail while keeping the rest of preview behavior. A preview needs
+no Stripe keys at all; `STOREFRONT_PREVIEW_PAYMENT_MODE=stripe` is an
+explicit opt-in to Stripe test mode, and live mode is refused.
 
-Plans, presentation prices, Stripe Price IDs, and entitlements live together
-in `config/initializers/pricing_plans.rb`. Replace the descriptive local Price
-IDs with `STRIPE_PRO_MONTHLY_PRICE_ID`, `STRIPE_PRO_YEARLY_PRICE_ID`,
-`STRIPE_ENTERPRISE_MONTHLY_PRICE_ID`, and
-`STRIPE_ENTERPRISE_YEARLY_PRICE_ID` in a deployed environment. Configure Pay
-with `STRIPE_PUBLIC_KEY`, `STRIPE_PRIVATE_KEY`, and
-`STRIPE_SIGNING_SECRET` (or the equivalent Rails credentials), then register
-Stripe webhooks at `/pay/webhooks/stripe`. The web process and `bin/jobs`
-worker must both be running so Pay can apply webhook updates.
+## Generated applications and publication
 
-The organization is the Pay customer and plan owner. Manual operator grants
-use the pricing_plans console helpers:
+Applications are generated from this template by a separate service; that
+service is not part of this repository and this repository contains no
+publishing, deploy, or repository-visibility code.
+
+A generated application's repository is created **private**. It stays private
+until an operator explicitly enables publication for it — there is no
+automatic or scheduled step that makes a generated application, its source,
+or its preview public. Treat a preview URL as unlisted rather than secret:
+preview responses carry `X-Robots-Tag: noindex`, which keeps them out of
+search results but is not an access control.
+
+Nothing about publication changes the launch requirements below. A private
+repository and an unindexed preview do not substitute for the legal review,
+Stripe configuration, and storage setup a real deployment needs.
+
+## Legal review checklist
+
+The Terms of Service and Privacy Policy shipped here were written for this
+template as a **starting point, not legal advice**. They are not reviewed for
+your jurisdiction, your business model, or your data practices. Before
+accepting a real signup or a real payment:
+
+- [ ] Search both documents for `TODO-OPERATOR` and replace every marker:
+      operator identity, governing law, refund terms, lawful bases, processor
+      list, international transfers, and contact mailboxes.
+- [ ] Have qualified counsel review the result for your jurisdiction and
+      sector, including consumer, distance-selling, and minimum-age rules.
+- [ ] Confirm the version identifiers and "last updated" dates are correct;
+      assent records store the version a user accepted, so a substantive
+      change means a new version.
+- [ ] Reconcile the Privacy Policy with what the application actually stores:
+      accounts, organizations, orders, uploaded images, device sessions and
+      login events (retained 12 months by default), and Stripe's records.
+- [ ] Review cookie and analytics language against anything you add; the
+      foundation sets only first-party session and device cookies.
+- [ ] Confirm the support and legal mailboxes in `config/foundation.yml` are
+      monitored, and that they can receive data-subject requests.
+- [ ] For the storefront: complete the commerce checklist in
+      [`docs/STOREFRONT.md`](docs/STOREFRONT.md) and then set
+      `storefront_commerce_legal_reviewed: true`. Production readiness fails
+      until you do. The module is digital-only — selling physical goods
+      requires address collection, shipping, tax, and matching terms that are
+      not implemented here.
+- [ ] Verify the Terms and Privacy links still render on signup, checkout,
+      the OAuth assent step, and the public footer. Tests assert this; keep
+      them.
+
+## Administration
+
+Application administration is separate from organization roles. An
+organization owner or admin has no access to `/admin`; only `User#admin?`
+does, and there is deliberately no form, registration parameter, seed, or
+public route that grants it. Promote the first trusted operator from the
+Rails console:
+
+```ruby
+User.find_by!(email: "operator@example.com").update!(admin: true)
+```
+
+Admin resources are read-only except for the named actions on their detail
+pages. Plan changes validate against `PricingPlans.plans` and use the same
+`assign_pricing_plan!` / `remove_pricing_plan!` API available in the console:
 
 ```ruby
 organization.assign_pricing_plan!(:enterprise)
@@ -187,90 +337,24 @@ organization.current_pricing_plan_source # :assignment, :subscription, or :defau
 organization.plan_allows?(:single_sign_on)
 ```
 
-Revenue and customer metrics are available in the Rails console through
-profitable, reading Pay's locally synchronized records without a live Stripe
-query:
+Revenue and customer metrics read Pay's locally synchronized records without
+a live Stripe query:
 
 ```ruby
 Profitable.mrr.to_readable
 Profitable.arr.to_readable
-Profitable.ttm_revenue.to_readable
 Profitable.churn(in_the_last: 30.days).to_readable
-Profitable.active_subscribers.to_readable
 ```
 
-## Storefront setup
-
-The complete deploy and operations contract is in
-[`docs/STOREFRONT.md`](docs/STOREFRONT.md). In short,
-`storefront_enabled: true` (the literal YAML boolean) enables catalog, cart,
-checkout, receipt, and storefront-admin routes and UI. Every other value
-disables those interactive surfaces. The verified settlement webhook remains
-mounted after disable so Checkout Sessions created before a flag change cannot
-become paid but unfulfillable; drain them before removing Stripe credentials.
-
-Outside preview, configure `STOREFRONT_STRIPE_SECRET_KEY` (or the existing
-`STRIPE_PRIVATE_KEY`), a distinct `STOREFRONT_STRIPE_WEBHOOK_SECRET`, and
-`STOREFRONT_STRIPE_MODE=live` or `test`. Production defaults to `live` and
-rejects test/live prefix mismatches and obvious placeholders. Register the
-storefront endpoint `/storefront/stripe/webhook` separately from Pay's
-organization-subscription endpoint `/pay/webhooks/stripe`; their signing
-secrets and ledgers have different responsibilities. Never put keys in this
-repository.
-
-`VELA_HOLODEX_PREVIEW=1` defaults to a conspicuous local simulator with no
-Stripe call and no payment fields. An injected preview can opt into real
-Stripe test mode only with `STOREFRONT_PREVIEW_PAYMENT_MODE=stripe`, test keys,
-and a signing secret. Live Stripe mode is rejected in preview. Offline preview
-also stores uploads locally, sends `X-Robots-Tag: noindex` on normal, health,
-and error responses, keeps mail in memory, and auto-confirms new accounts.
-Supplying `SMTP_ADDRESS` keeps the preview noindex/simulator/storage behavior
-but restores ordinary Devise confirmation mail.
-
-This M8 module is intentionally digital-only
-(`storefront_fulfillment_mode: digital`): inventory means limited licenses or
-capacity. It does not collect a shipping address or claim to calculate tax.
-Before selling physical goods, implement address validation, carrier/fulfillment
-workflows, tax, regional restrictions, and corresponding legal language.
-Review every `TODO-OPERATOR` in Terms and Privacy with qualified counsel; the
-included text is a starting point, not legal advice.
-Production/live readiness also rejects the template identity and the default
-`storefront_commerce_legal_reviewed: false` marker. External product images
-are disabled by default; explicitly allow only controlled HTTPS CDN hosts in
-`storefront_external_image_hosts`, or use validated uploads.
-
-## Administration
-
-Application administration is separate from organization roles. An
-organization owner or admin has no access to `/admin`; only `User#admin?` does.
-There is deliberately no form, registration parameter, seed, or public route
-that grants this flag. Promote the first trusted operator from the Rails
-console:
-
-```ruby
-User.find_by!(email: "operator@example.com").update!(admin: true)
-```
-
-Admin resources are read-only except for the named actions shown on their
-detail pages. Plan changes validate against `PricingPlans.plans` and call the
-same `assign_pricing_plan!` / `remove_pricing_plan!` API used by console
-operators. Locking uses Devise's lockable API. Session revocation is enforced
+Locking uses Devise's lockable API, and session revocation is enforced
 server-side on the affected device's next request, including revoke-all for
-account-takeover response.
-
-Every mutating request in the admin and jobs controllers writes one structured
-JSON event to the Rails log (`foundation.admin.mutation`) with action, actor
-ID, request ID/method, subject type/ID, and outcome. It never includes request
-parameters, tokens, credential values, or exception messages. Mission Control
-hides positional job arguments and filters keyed arguments/raw data through
-Rails' sensitive-parameter filter before rendering.
-
-The `sessions` integration creates a signed first-party device identifier at
-sign-in and stores device, IP, and login-event data. The default daily
-`SessionsSweepJob` bounds event retention to 12 months. Review the Privacy
-Policy's session/cookie language and your jurisdiction's requirements before
-launch.
+account-takeover response. Every mutating admin request writes one structured
+JSON event (`foundation.admin.mutation`) with action, actor id, request id and
+method, subject type and id, and outcome — never parameters, tokens, or
+credential values.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE). Third-party notices for the vendored font
+subset and color algorithm are in
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
