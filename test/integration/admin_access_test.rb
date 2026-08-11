@@ -124,8 +124,8 @@ class AdminAccessTest < ActionDispatch::IntegrationTest
     get "/admin/dashboard"
 
     assert_response :success
-    assert_select "h2", text: "Storefront administration"
-    # Once in the shared nav, once in the dashboard body copy — the body link
+    assert_select "section[aria-labelledby=storefront-admin-heading] h2#storefront-admin-heading", count: 1
+    # Once in the shared nav, once in the dashboard body — the body link
     # replaced a stale placeholder that claimed the storefront wasn't
     # installed while it was live.
     assert_select "a[href='#{storefront_admin_products_path}']", count: 2

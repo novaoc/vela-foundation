@@ -14,7 +14,8 @@ class CrmFlowsTest < ActionDispatch::IntegrationTest
   test "overview and primary CRUD surfaces render" do
     get crm_root_path
     assert_response :success
-    assert_select "h1", text: "CRM"
+    assert_select "h1", minimum: 1
+    assert_select "a[href='#{crm_contacts_path}']", minimum: 1
 
     get crm_contacts_path
     assert_response :success

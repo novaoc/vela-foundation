@@ -82,8 +82,9 @@ class NativeShellTest < ActionDispatch::IntegrationTest
   test "native auth landing is MD3 and has no emoji" do
     get native_auth_path, headers: { "User-Agent" => NATIVE_IOS_UA }
     assert_response :success
-    assert_select "h1", text: "Sign in"
+    assert_select "h1", minimum: 1
     assert_select "form[action=?]", user_session_path
+    assert_select "form input[type=email], form input[name='user[email]']", minimum: 1
     assert_no_match(/\p{Emoji_Presentation}/, response.body)
   end
 

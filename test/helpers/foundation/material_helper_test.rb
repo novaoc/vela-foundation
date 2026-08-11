@@ -17,8 +17,17 @@ class Foundation::MaterialHelperTest < ActionView::TestCase
 
     assert_includes output, "role=\"img\""
     assert_includes output, "aria-label=\"Warning\""
-    assert_raises(ArgumentError) { material_symbol("uncommitted_glyph") }
+    error = assert_raises(ArgumentError) { material_symbol("uncommitted_glyph") }
+    assert_match(/unknown Material Symbol: uncommitted_glyph/, error.message)
+    assert_match(/generate_symbols\.sh/, error.message)
     assert_raises(ArgumentError) { material_symbol(:home, size: 21) }
+  end
+
+  test "business catalog symbols used by generated applications are in the subset" do
+    %i[receipt_long shopping_cart calendar_today search add edit delete settings mail].each do |name|
+      assert_includes Foundation::MaterialHelper::MATERIAL_SYMBOLS, name.to_s
+      assert_match(/material-symbol/, material_symbol(name))
+    end
   end
 
   test "buttons escape labels and expose disabled and loading states" do

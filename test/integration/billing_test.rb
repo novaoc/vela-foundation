@@ -9,17 +9,21 @@ class BillingTest < ActionDispatch::IntegrationTest
   test "public pricing renders configured tiers and interval toggle" do
     get pricing_path
     assert_response :success
-    assert_select "h2", text: "Free"
-    assert_select "h2", text: "Pro"
-    assert_select "h2", text: "Enterprise"
-    assert_select "a[aria-current=page]", text: "Monthly"
-    assert_select "p", text: /\$29/
-    assert_select "a", text: "Contact sales"
+    assert_select ".md-price-card", count: PricingPlans.plans.size
+    assert_select ".md-tabs a[aria-current=page]", minimum: 1
+    PricingPlans.plans.each do |plan|
+      assert_select ".md-price-card h2", text: plan.name
+    end
+    pro = PricingPlans.plans.find { |plan| plan.key.to_sym == :pro }
+    month_cents = pro.metadata.fetch(:prices).fetch(:month)
+    assert_select ".md-price-card__price", text: /#{Regexp.escape(format("$%d", month_cents / 100))}/
+    assert_select "a[href=?]", "mailto:#{Rails.configuration.x.foundation[:support_email]}", minimum: 1
 
     get pricing_path(interval: "year")
     assert_response :success
-    assert_select "a[aria-current=page]", text: "Yearly"
-    assert_select "p", text: /\$290/
+    assert_select ".md-tabs a[aria-current=page]", minimum: 1
+    year_cents = pro.metadata.fetch(:prices).fetch(:year)
+    assert_select ".md-price-card__price", text: /#{Regexp.escape(format("$%d", year_cents / 100))}/
   end
 
   test "self-serve free org billing page renders free badge and compare plans" do
@@ -27,10 +31,11 @@ class BillingTest < ActionDispatch::IntegrationTest
 
     get billing_path
     assert_response :success
-    assert_select "h2", text: "Free"
-    assert_select "span", text: "Free plan"
-    assert_select "a", text: "Compare plans"
+    default_plan = PricingPlans.plans.find(&:default?)
+    assert_select "h2", text: default_plan.name
+    assert_select "a[href=?]", pricing_path, minimum: 1
     assert_select "form[action=?]", billing_portal_path, count: 0
+    assert_select "span", text: Foundation::BillingPresenter::SOURCE_BADGES.fetch(:default).fetch(:label)
     assert_select "span", text: "Payment grace period", count: 0
     assert_select "span", text: "Payment past due", count: 0
   end

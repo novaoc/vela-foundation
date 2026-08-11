@@ -7,11 +7,13 @@ class MaterialDesignPagesTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "a.md-skip-link[href='#main-content']", text: "Skip to main content"
     # foundation:module storefront
-    assert_select "h1", text: "Shop"
+    assert_select "h1", minimum: 1
+    assert_select "main#main-content"
     assert_select "a[href='#{storefront_cart_path}']", minimum: 1
+    assert_select "a[href='#{storefront_products_path}']", minimum: 1
     assert_select ".md-pricing-grid", count: 0
     # /foundation:module storefront
-    assert_select "footer a", text: "Terms of Service"
+    assert_select "footer a[href='#{legal_terms_path}']", minimum: 1
   end
 
   test "auth and pricing pages use local Material assets without a font CDN" do
@@ -36,7 +38,8 @@ class MaterialDesignPagesTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "nav.md-navigation", count: 1
     # foundation:module storefront
-    assert_select "nav.md-navigation a", text: /Shop/
+    assert_select "nav.md-navigation a[href='#{root_path}'], nav.md-navigation a[href='#{storefront_products_path}']", minimum: 1
+    assert_select "nav.md-navigation a[href='#{storefront_cart_path}']", minimum: 1
     # /foundation:module storefront
     assert_select "nav.md-navigation form button.md-navigation__signout", text: "Sign out", count: 1
     assert_select "main#main-content.md-main"

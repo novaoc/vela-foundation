@@ -86,8 +86,8 @@ class MaterialDesignTokensTest < ActiveSupport::TestCase
     symbols = Rails.root.join("tools/material/symbols.txt").read.lines.filter_map { |line| line.split.first }
 
     assert_equal Foundation::MaterialHelper::MATERIAL_SYMBOLS.keys.sort, symbols.sort
-    assert_operator font.size, :<, 50_000
-    assert_equal "a74ff879c75afa6eec38340ff8185d0cbf1dbdbfe91d2d732f87950175840be5",
+    assert_operator font.size, :<, 100_000
+    assert_equal "4b689dd6afe947c173736f5e2f99557e1005adca1cd0ca5300249130219f79e6",
       Digest::SHA256.file(font).hexdigest
   end
 

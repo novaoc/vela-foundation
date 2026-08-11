@@ -69,11 +69,34 @@ Material Symbols Rounded subset. Decorative symbols get `aria-hidden`; pass
 ```
 
 Only names in `Foundation::MaterialHelper::MATERIAL_SYMBOLS` are accepted.
-`tools/material/symbols.txt` records the same pinned codepoint map. To change
-the inventory, update both maps, then run `tools/material/generate_symbols.sh`.
-The script downloads the official font, codepoint index, and Apache license
-from the pinned Google revision; verifies their SHA-256 values; and creates a
-small WOFF2 containing only those codepoints. Never add a runtime font URL.
+`tools/material/symbols.txt` records the same pinned codepoint map. Unknown
+names raise at render time with instructions to expand the subset — that catch
+is intentional so typos fail in tests instead of shipping empty icons.
+
+To add a symbol a generated application needs:
+
+1. Look up the name and hex codepoint in the pinned
+   [Material Symbols Rounded codepoints](https://github.com/google/material-design-icons/blob/50f0603134ce7b70b2d71b686cc13e8b57ccb74c/variablefont/MaterialSymbolsRounded%5BFILL%2CGRAD%2Copsz%2Cwght%5D.codepoints)
+   file from `google/material-design-icons`.
+2. Append `name hex` to `tools/material/symbols.txt` (sorted alphabetically).
+3. Add the same entry to `Foundation::MaterialHelper::MATERIAL_SYMBOLS`
+   (`"name" => 0xHEX`).
+4. Regenerate the subset:
+
+```sh
+tools/material/generate_symbols.sh
+```
+
+5. Update the SHA-256 expectation in
+   `test/models/material_design_tokens_test.rb` to match the new WOFF2
+   (`shasum -a 256 app/assets/fonts/material-symbols-rounded-subset.woff2`).
+6. Run `bin/rails test test/helpers/foundation/material_helper_test.rb test/models/material_design_tokens_test.rb`.
+
+The script downloads the official variable font, codepoint index, and Apache
+license from the pinned Google revision; verifies their SHA-256 values; and
+writes a small WOFF2 containing only those codepoints via `fontTools.subset`.
+Never add a runtime font URL. Keep the subset lean — every glyph grows the
+committed WOFF2 that every page loads.
 
 ## Components
 

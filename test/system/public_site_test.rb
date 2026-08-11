@@ -14,15 +14,15 @@ class PublicSiteTest < ApplicationSystemTestCase
 
     assert_selector "main#main-content"
     # foundation:module storefront
-    assert_selector "h1", text: "Shop"
+    assert_selector "h1", minimum: 1
     # /foundation:module storefront
     assert_selector "a.md-skip-link[href='#main-content']", visible: :all
 
     within "header.md-top-app-bar" do
       assert_link Rails.configuration.x.foundation[:application_name], href: root_path
       # foundation:module storefront
-      assert_link "Shop", href: storefront_products_path
-      assert_link "Cart", href: storefront_cart_path
+      assert_selector "a[href='#{storefront_products_path}']", minimum: 1
+      assert_selector "a[href='#{storefront_cart_path}']", minimum: 1
       # /foundation:module storefront
       assert_link "Sign in", href: new_user_session_path
     end

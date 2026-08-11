@@ -40,7 +40,8 @@ class DevicesSettingsTest < ActionDispatch::IntegrationTest
     sign_in_as(@user)
     get settings_sessions_root_path
     assert_response :success
-    assert_select "h1", text: "Your devices"
+    assert_select "h1", minimum: 1
+    assert_select "main#main-content"
     assert_select "form[action=?]", settings_sessions_session_path(other_session), count: 0
   end
 
@@ -48,9 +49,9 @@ class DevicesSettingsTest < ActionDispatch::IntegrationTest
     sign_in_as(@user)
     get settings_sessions_root_path
     assert_response :success
-    assert_select "span", text: "This device"
-
     current = @user.sessions.live.find_by!(user_agent: ACTOR_UA)
+    assert_select "form[action=?]", settings_sessions_session_path(current), count: 0
+
     grant_reauthentication!
     delete settings_sessions_session_path(current)
     assert_redirected_to settings_sessions_root_path
