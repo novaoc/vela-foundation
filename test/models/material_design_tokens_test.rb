@@ -16,7 +16,13 @@ class MaterialDesignTokensTest < ActiveSupport::TestCase
     assert_equal "SchemeTonalSpot", metadata.fetch("algorithm")
     assert_equal "Material dynamic color 2021", metadata.fetch("variant")
     assert_equal 0, metadata.fetch("contrastLevel")
-    assert_equal Rails.configuration.x.foundation[:brand_seed_color].upcase, metadata.fetch("seed")
+    assert_equal Rails.configuration.x.foundation[:brand_seed_color].upcase, metadata.fetch("seed"),
+      "brand_seed_color changed without regenerating the color tokens. " \
+      "Run: node tools/material/dist/generate_tokens.mjs (requires Node locally; " \
+      "the bundle is committed and self-contained), commit the regenerated " \
+      "config/material_tokens.* and app/assets/stylesheets/material_tokens.css — " \
+      "or revert brand_seed_color to the seed recorded in config/material_tokens.json. " \
+      "Automated pipelines without Node should keep the committed palette."
     assert_equal Rails.root.join("config/material_tokens.sha256").read.strip,
       Digest::SHA256.file(TOKEN_PATH).hexdigest
   end

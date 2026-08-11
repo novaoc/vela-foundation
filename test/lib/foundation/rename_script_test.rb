@@ -109,14 +109,20 @@ class RenameScriptTest < ActiveSupport::TestCase
 
   test "comments and unrelated settings survive the rewrite" do
     original = File.read(File.join(@root, "config/foundation.yml"))
+    original_identity = YAML.safe_load(original).fetch("shared")
     _stdout, stderr, status = rename(*IDENTITY_ARGS)
 
     assert_predicate status, :success?, stderr
     rewritten = File.read(File.join(@root, "config/foundation.yml"))
     assert_equal original.lines.length, rewritten.lines.length
     assert_includes rewritten, "# Display name used in page titles, meta tags, and mail."
-    assert_equal true, stamped_identity.fetch("storefront_enabled")
-    assert_equal "#6750A4", stamped_identity.fetch("brand_seed_color")
+    # Settings the script does not stamp must come through byte-identical —
+    # compared against their pre-run values, never against template defaults,
+    # because this test also runs inside generated applications that have
+    # legitimately customized them (a real app's changed brand seed once
+    # failed here purely for not being the template's default).
+    assert_equal original_identity.fetch("storefront_enabled"), stamped_identity.fetch("storefront_enabled")
+    assert_equal original_identity.fetch("brand_seed_color"), stamped_identity.fetch("brand_seed_color")
   end
 
   test "running twice with the same arguments changes nothing the second time" do
