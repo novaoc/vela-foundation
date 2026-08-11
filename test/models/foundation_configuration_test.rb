@@ -16,6 +16,8 @@ class FoundationConfigurationTest < ActiveSupport::TestCase
     storefront_fulfillment_mode
     storefront_commerce_legal_reviewed
     storefront_external_image_hosts
+    healthcheck_disk_usage_percent_max
+    healthcheck_memory_usage_percent_max
   ].freeze
 
   test "foundation config is loaded with indifferent access" do
@@ -42,5 +44,7 @@ class FoundationConfigurationTest < ActiveSupport::TestCase
     assert_equal "digital", foundation[:storefront_fulfillment_mode]
     assert_equal false, foundation[:storefront_commerce_legal_reviewed]
     assert_equal [], foundation[:storefront_external_image_hosts]
+    assert_equal 90, foundation[:healthcheck_disk_usage_percent_max]
+    assert_equal 90, foundation[:healthcheck_memory_usage_percent_max]
   end
 end

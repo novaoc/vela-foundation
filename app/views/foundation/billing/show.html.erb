@@ -10,27 +10,24 @@
   <article class="md-card md-card--elevated md-stack">
     <div>
       <p class="text-md-on-surface-variant">Current plan</p>
-      <h2><%= @plan.name %></h2>
+      <h2><%= @billing.plan_name %></h2>
     </div>
-    <% if @source == :assignment %>
-      <span class="md-chip selected">Manually assigned</span>
-    <% elsif @source == :subscription %>
-      <span class="md-chip selected">Stripe subscription</span>
-    <% else %>
-      <span class="md-chip">Free plan</span>
+    <span class="md-chip<%= " selected" if @billing.source_badge_selected? %>"><%= @billing.source_badge_label %></span>
+    <% @billing.status_badges.each do |badge| %>
+      <span class="md-chip<%= " selected" if badge[:selected] %>"><%= badge[:label] %></span>
     <% end %>
 
     <div class="md-actions">
-      <% if @organization.billing_management_available? %>
+      <% if @billing.show_manage_subscription? %>
         <%= button_to "Manage subscription", billing_portal_path, data: { turbo: false }, class: "md-button md-button--filled" %>
       <% end %>
-      <% if @organization.show_self_serve_plan_ctas? %>
+      <% if @billing.show_compare_plans? %>
         <%= link_to "Compare plans", pricing_path, class: "md-button md-button--outlined" %>
       <% end %>
     </div>
 
-    <% if @source == :assignment && @organization.billing_management_available? %>
-      <p class="text-md-on-surface-variant">Your administrator controls feature access. The billing portal remains available for the separate live subscription.</p>
+    <% if (notice = @billing.mixed_assignment_notice) %>
+      <p class="text-md-on-surface-variant"><%= notice %></p>
     <% end %>
   </article>
 </section>

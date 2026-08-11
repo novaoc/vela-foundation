@@ -85,3 +85,25 @@ unless Rails.env.test?
     make_sure result.ready?, result.errors.join("; ")
   end
 end
+
+disk_threshold = Rails.configuration.x.foundation.fetch(:healthcheck_disk_usage_percent_max, 90).to_i
+check "Disk usage is below #{disk_threshold}%" do
+  usage = Foundation::HostResources.disk_usage_percent
+  if usage.nil?
+    # Prefer a soft pass over a hard fail when the platform hides capacity
+    # figures (restricted containers, unusual hosts).
+    make_sure true, "Disk usage is not exposed on this platform; probe skipped"
+  else
+    make_sure usage < disk_threshold, "Disk usage at #{usage}% (threshold #{disk_threshold}%)"
+  end
+end
+
+memory_threshold = Rails.configuration.x.foundation.fetch(:healthcheck_memory_usage_percent_max, 90).to_i
+check "Memory usage is below #{memory_threshold}%" do
+  usage = Foundation::HostResources.memory_usage_percent
+  if usage.nil?
+    make_sure true, "Memory usage is not exposed on this platform; probe skipped"
+  else
+    make_sure usage < memory_threshold, "Memory usage at #{usage}% (threshold #{memory_threshold}%)"
+  end
+end

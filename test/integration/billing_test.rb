@@ -1,12 +1,9 @@
 require "test_helper"
 
 class BillingTest < ActionDispatch::IntegrationTest
-  PASSWORD = "correct horse battery"
-
   setup do
     @owner = users(:confirmed)
-    @organization = Organizations::Organization.create!(name: "Billing Lab")
-    Organizations::Membership.create!(user: @owner, organization: @organization, role: "owner")
+    @organization = create_billable_organization(owner: @owner)
   end
 
   test "public pricing renders configured tiers and interval toggle" do
@@ -17,6 +14,7 @@ class BillingTest < ActionDispatch::IntegrationTest
     assert_select "h2", text: "Enterprise"
     assert_select "a[aria-current=page]", text: "Monthly"
     assert_select "p", text: /\$29/
+    assert_select "a", text: "Contact sales"
 
     get pricing_path(interval: "year")
     assert_response :success
@@ -24,9 +22,22 @@ class BillingTest < ActionDispatch::IntegrationTest
     assert_select "p", text: /\$290/
   end
 
+  test "self-serve free org billing page renders free badge and compare plans" do
+    sign_in_billable(@owner, @organization)
+
+    get billing_path
+    assert_response :success
+    assert_select "h2", text: "Free"
+    assert_select "span", text: "Free plan"
+    assert_select "a", text: "Compare plans"
+    assert_select "form[action=?]", billing_portal_path, count: 0
+    assert_select "span", text: "Payment grace period", count: 0
+    assert_select "span", text: "Payment past due", count: 0
+  end
+
   test "manual plans are marked and hide self-serve upgrade calls to action" do
     @organization.assign_pricing_plan!(:pro)
-    sign_in_and_switch(@owner)
+    sign_in_billable(@owner, @organization)
 
     get pricing_path
     assert_response :success
@@ -35,9 +46,45 @@ class BillingTest < ActionDispatch::IntegrationTest
     assert_select "span", text: /Current plan · manual/
   end
 
+  test "grace subscription renders payment grace badge on billing" do
+    create_pay_subscription(@organization, status: "active", ends_at: 5.days.from_now)
+    sign_in_billable(@owner, @organization)
+
+    get billing_path
+    assert_response :success
+    assert_select "span", text: "Stripe subscription"
+    assert_select "span", text: "Payment grace period"
+    assert_select "form[action=?]", billing_portal_path
+  end
+
+  test "delinquent subscription renders payment past due badge on billing" do
+    create_pay_subscription(@organization, status: "past_due")
+    sign_in_billable(@owner, @organization)
+
+    get billing_path
+    assert_response :success
+    assert_select "span", text: "Payment past due"
+    assert_select "form[action=?]", billing_portal_path
+  end
+
+  test "contact sales plan renders sales cta and rejects checkout" do
+    sign_in_billable(@owner, @organization)
+
+    get pricing_path
+    assert_response :success
+    assert_select "a[href=?]", "mailto:#{Rails.configuration.x.foundation[:support_email]}", text: "Contact sales"
+    assert_select "form[action=?]", billing_checkout_path do
+      assert_select "input[name=plan][value=enterprise]", count: 0
+    end
+
+    post billing_checkout_path, params: { plan: "enterprise", interval: "month" }
+    assert_redirected_to pricing_path
+    assert_match(/sales/i, flash[:alert])
+  end
+
   test "checkout uses the selected configured Stripe price" do
     host! "attacker.invalid"
-    sign_in_and_switch(@owner)
+    sign_in_billable(@owner, @organization)
     captured = nil
     checkout = lambda do |**arguments|
       captured = arguments
@@ -58,7 +105,7 @@ class BillingTest < ActionDispatch::IntegrationTest
   end
 
   test "checkout rejects free, unknown, and manually controlled plans" do
-    sign_in_and_switch(@owner)
+    sign_in_billable(@owner, @organization)
 
     post billing_checkout_path, params: { plan: "free", interval: "month" }
     assert_redirected_to pricing_path
@@ -77,7 +124,7 @@ class BillingTest < ActionDispatch::IntegrationTest
       confirmed_at: Time.current
     )
     Organizations::Membership.create!(user: member, organization: @organization, role: "member")
-    sign_in_and_switch(member)
+    sign_in_billable(member, @organization)
 
     post billing_checkout_path, params: { plan: "pro", interval: "month" }
     assert_redirected_to billing_path
@@ -85,9 +132,9 @@ class BillingTest < ActionDispatch::IntegrationTest
   end
 
   test "mixed manual and subscription state still exposes the portal" do
-    create_subscription
+    create_pay_subscription(@organization)
     @organization.assign_pricing_plan!(:enterprise)
-    sign_in_and_switch(@owner)
+    sign_in_billable(@owner, @organization)
 
     get billing_path
     assert_response :success
@@ -108,28 +155,5 @@ class BillingTest < ActionDispatch::IntegrationTest
     assert_redirected_to "https://billing.stripe.test/portal_stub"
     assert_equal @organization, portal_arguments[:organization]
     assert_equal "https://example.com/billing", portal_arguments[:return_url]
-  end
-
-  private
-
-  def sign_in_and_switch(user)
-    post user_session_path, params: { user: { email: user.email, password: PASSWORD } }
-    post organizations.switch_organization_path(@organization)
-  end
-
-  def create_subscription
-    customer = Pay::Stripe::Customer.create!(
-      owner: @organization,
-      processor: "stripe",
-      processor_id: "cus_billing_test",
-      default: true
-    )
-    Pay::Stripe::Subscription.create!(
-      customer: customer,
-      name: "default",
-      processor_id: "sub_billing_test",
-      processor_plan: "price_pro_monthly",
-      status: "active"
-    )
   end
 end

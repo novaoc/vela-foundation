@@ -57,3 +57,8 @@ shared:
   # Exact lowercase HTTPS hosts permitted for browser-rendered external
   # product images. Empty (the safe default) requires Active Storage uploads.
   storefront_external_image_hosts: []
+
+  # Host capacity ceilings for /healthcheck disk and memory probes (percent used).
+  # Probes pass with an informational note when the platform cannot report figures.
+  healthcheck_disk_usage_percent_max: 90
+  healthcheck_memory_usage_percent_max: 90

@@ -85,20 +85,6 @@ class BillableOrganizationTest < ActiveSupport::TestCase
   private
 
   def create_subscription(processor_plan:)
-    customer = Pay::Stripe::Customer.create!(
-      owner: @organization,
-      processor: "stripe",
-      processor_id: "cus_#{SecureRandom.hex(6)}",
-      default: true
-    )
-    Pay::Stripe::Subscription.create!(
-      customer: customer,
-      name: "default",
-      processor_id: "sub_#{SecureRandom.hex(6)}",
-      processor_plan: processor_plan,
-      status: "active",
-      current_period_start: Time.current,
-      current_period_end: 1.month.from_now
-    )
+    create_pay_subscription(@organization, processor_plan: processor_plan)
   end
 end

@@ -10,7 +10,7 @@
     } %>
   </header>
 
-  <% if @organization&.manually_assigned_plan? %>
+  <% if @billing.manual_plan_banner? %>
     <div class="md-card md-card--filled mt-8" role="status">
       <strong>Manually assigned plan.</strong> Contact an administrator to change access. Existing subscription billing can still be managed from <%= link_to "Billing", billing_path %>.
     </div>
@@ -18,30 +18,33 @@
 
   <div class="md-pricing-grid">
     <% @plans.each do |plan| %>
-      <% current = @organization && plan == @organization.current_pricing_plan %>
-      <% cents = plan.metadata.dig(:prices, @interval.to_sym) %>
+      <% cta = @billing.plan_cta(plan) %>
       <article class="md-card <%= plan.highlighted? ? "md-card--elevated" : "md-card--outlined" %> md-price-card">
         <% if plan.highlighted? %><span class="md-chip selected">Most popular</span><% end %>
         <h2><%= plan.name %></h2>
         <p class="text-md-on-surface-variant"><%= plan.description %></p>
         <p class="md-price-card__price">
-          <%= cents.zero? ? "Free" : number_to_currency(cents / 100.0, precision: 0) %>
-          <% unless cents.zero? %><span class="text-md-on-surface-variant">/<%= @interval %></span><% end %>
+          <%= @billing.price_amount_label(plan) %>
+          <% if @billing.show_interval_suffix?(plan) %><span class="text-md-on-surface-variant">/<%= @interval %></span><% end %>
         </p>
         <ul><% plan.bullets.each do |bullet| %><li><%= bullet %></li><% end %></ul>
 
-        <% if current %>
-          <span class="md-chip selected">Current plan<%= " · manual" if @organization.manually_assigned_plan? %></span>
-        <% elsif @organization&.manually_assigned_plan? %>
-          <span class="md-chip">Administrator managed</span>
-        <% elsif cents.zero? %>
-          <%= link_to "Get started", user_signed_in? ? billing_path : new_user_registration_path, class: "md-button md-button--outlined" %>
-        <% elsif user_signed_in? %>
-          <%= button_to "Choose #{plan.name}", billing_checkout_path,
-                params: { plan: plan.key, interval: @interval }, data: { turbo: false },
-                class: "md-button md-button--filled" %>
-        <% else %>
-          <%= link_to "Sign in to subscribe", new_user_session_path, class: "md-button md-button--filled" %>
+        <% case cta[:kind] %>
+        <% when :badge %>
+          <span class="md-chip<%= " selected" if cta[:selected] %>"><%= cta[:label] %></span>
+        <% when :checkout %>
+          <%= button_to cta[:label], billing_checkout_path,
+                params: { plan: cta[:plan_key], interval: cta[:interval] }, data: { turbo: false },
+                class: cta[:style] %>
+        <% when :external %>
+          <%= link_to cta[:label], cta[:url], class: cta[:style] %>
+        <% when :link %>
+          <% href = case cta[:path]
+                    when :billing then billing_path
+                    when :registration then new_user_registration_path
+                    else new_user_session_path
+                    end %>
+          <%= link_to cta[:label], href, class: cta[:style] %>
         <% end %>
       </article>
     <% end %>

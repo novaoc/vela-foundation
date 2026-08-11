@@ -38,11 +38,16 @@ PricingPlans.configure do |config|
     bullets "Unlimited team members", "API access", "Single sign-on", "Dedicated support"
     allows :core_workspace, :team_collaboration, :api_access, :priority_support, :single_sign_on
     unlimited :team_members
+    cta_text "Contact sales"
+    cta_url "mailto:#{Rails.configuration.x.foundation[:support_email]}"
+    # contact_sales is explicit plan metadata — never infer from price labels.
+    # Stripe price IDs remain so operator-created subscriptions still resolve.
     metadata prices: { month: 99_00, year: 990_00 },
       stripe_prices: {
         month: ENV.fetch("STRIPE_ENTERPRISE_MONTHLY_PRICE_ID", "price_enterprise_monthly"),
         year: ENV.fetch("STRIPE_ENTERPRISE_YEARLY_PRICE_ID", "price_enterprise_yearly")
       },
+      contact_sales: true,
       currency: "USD"
   end
 
