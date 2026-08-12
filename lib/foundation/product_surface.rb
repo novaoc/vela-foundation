@@ -129,14 +129,20 @@ module Foundation
       case decision
       when true then true
       when false then false
+      # foundation:module storefront
       when :storefront
         Foundation.module_available?("storefront") && Foundation.storefront_enabled?
-      when :without_storefront
+      when :without_storefront, :public_without_storefront
         !(Foundation.module_available?("storefront") && Foundation.storefront_enabled?)
-      when :public_without_storefront
-        !(Foundation.module_available?("storefront") && Foundation.storefront_enabled?)
+      # /foundation:module storefront
+      # After storefront omit the block above is stripped; absent storefront
+      # means "without storefront" features are available.
+      when :without_storefront, :public_without_storefront
+        true
+      # foundation:module crm
       when :module_crm
         Foundation.module_available?("crm")
+      # /foundation:module crm
       when :operator
         operator == true
       else

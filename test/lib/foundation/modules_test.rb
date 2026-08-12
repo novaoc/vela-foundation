@@ -92,7 +92,11 @@ class FoundationModulesTest < ActiveSupport::TestCase
 
     layout = File.read(File.join(@root, "app/views/layouts/application.html.erb"), encoding: "UTF-8")
     refute_match(/storefront_cart_path/, layout)
-    assert_match(/Billing/, layout)
+    nav = File.read(File.join(@root, "app/helpers/foundation/navigation_helper.rb"), encoding: "UTF-8")
+    refute_match(/storefront_cart_path/, nav)
+    refute_match(/storefront_products_path/, nav)
+    # Platform surface still offers Billing once the storefront module is gone.
+    assert_match(/Billing/, nav)
 
     css = File.read(File.join(@root, "app/assets/stylesheets/material_system.css"), encoding: "UTF-8")
     refute_match(/\.storefront-/, css)
