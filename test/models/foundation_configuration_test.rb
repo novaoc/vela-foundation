@@ -13,6 +13,10 @@ class FoundationConfigurationTest < ActiveSupport::TestCase
       support_email
       legal_email
       domain
+      product_surface
+      product_surface_features
+      design_skin
+      rarebox_data
       healthcheck_disk_usage_percent_max
       healthcheck_memory_usage_percent_max
     ]
@@ -47,6 +51,9 @@ class FoundationConfigurationTest < ActiveSupport::TestCase
 
     assert_equal "Application", foundation[:application_name]
     assert_match(/\A#\h{6}\z/, foundation[:brand_seed_color])
+    assert_equal "platform", foundation[:product_surface]
+    assert_equal "material", foundation[:design_skin]
+    assert_equal false, foundation.dig(:rarebox_data, :enabled)
     # foundation:module storefront
     assert_equal true, foundation[:storefront_enabled]
     assert_equal "digital", foundation[:storefront_fulfillment_mode]

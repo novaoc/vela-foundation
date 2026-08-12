@@ -19,34 +19,13 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="md-app" data-controller="foundation--theme">
+  <body class="md-app <%= foundation_design_skin_body_class %>" data-controller="foundation--theme" data-design-skin="<%= Foundation.design_skin.name %>" data-product-surface="<%= Foundation.product_surface.name %>">
     <% identity = Rails.configuration.x.foundation %>
     <a class="md-skip-link" href="#main-content">Skip to main content</a>
     <%= render "foundation/components/top_app_bar", identity: identity %>
 
     <% if user_signed_in? %>
-      <%
-        nav_items = [
-          { label: "Home", icon: :home, href: root_path, active: request.path == root_path },
-          { label: "Organizations", icon: :workspaces, href: organizations.organizations_path, active: request.path.start_with?("/organizations") },
-          { label: "Connections", icon: :settings, href: settings_connections_path, active: request.path == settings_connections_path || request.path.start_with?("/settings/connections") },
-          { label: "Devices", icon: :person, href: settings_sessions_root_path, active: request.path.start_with?("/settings/sessions") || request.path.start_with?("/settings/reauthentication") }
-        ]
-        if Foundation.module_available?("storefront") && Foundation.storefront_enabled? # foundation:module storefront
-          nav_items[0] = { label: "Shop", icon: :home, href: root_path, active: request.path == root_path || request.path.start_with?("/storefront/products") }
-          nav_items.insert(1, { label: "Cart", icon: :payments, href: storefront_cart_path, active: request.path == storefront_cart_path || request.path == storefront_checkout_path })
-        else # foundation:module storefront
-          nav_items.insert(2, { label: "Billing", icon: :payments, href: billing_path, active: request.path.start_with?("/billing") || request.path == pricing_path })
-        end # foundation:module storefront
-        # foundation:module crm
-        if Foundation.module_available?("crm")
-          nav_items.insert(-1, { label: "CRM", icon: :person, href: crm_root_path, active: request.path.start_with?("/crm") })
-        end
-        # /foundation:module crm
-        if current_user.admin?
-          nav_items << { label: "Admin", icon: :task_alt, href: madmin_root_path, active: request.path.start_with?("/admin") }
-        end
-      %>
+      <% nav_items = foundation_primary_nav_items(user: current_user) %>
       <div class="md-shell">
         <%= render "foundation/components/adaptive_navigation", items: nav_items %>
         <main id="main-content" class="md-main" tabindex="-1"><%= yield %></main>
@@ -57,12 +36,9 @@
         <div class="md-footer__inner">
           <p><strong><%= identity[:application_name] %></strong><br><span><%= identity[:default_page_description] %></span></p>
           <nav class="md-footer__links" aria-label="Legal and support">
-            <% if Foundation.module_available?("storefront") && Foundation.storefront_enabled? # foundation:module storefront %>
-              <%= link_to "Shop", storefront_products_path %>
-              <%= link_to "Cart", storefront_cart_path %>
-            <% else # foundation:module storefront %>
-              <%= link_to "Pricing", pricing_path %>
-            <% end # foundation:module storefront %>
+            <% foundation_public_footer_links.each do |link| %>
+              <%= link_to link[:label], link[:href] %>
+            <% end %>
             <%= link_to "Terms of Service", legal_terms_path %>
             <%= link_to "Privacy Policy", legal_privacy_path %>
             <%= mail_to identity[:support_email], "Support" %>

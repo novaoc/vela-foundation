@@ -135,6 +135,10 @@ runtime. `Foundation.module_available?` reports what remains. Core accounts,
 organizations, billing, admin, reauthentication, MD3, native shell, and
 deploy wiring are always present. See [`docs/MODULES.md`](docs/MODULES.md).
 
+**Product surface and design skins.** Modules decide what code is on disk; `product_surface` decides which foundation chrome a generated app exposes (a shop must not look like an operator console). `design_skin` layers a product-family visual language on MD3 tokens (`material`, `commerce`, `workspace`, `arcade`, `vault`, `signal`). See [`docs/PRODUCT_SURFACE.md`](docs/PRODUCT_SURFACE.md) and [`docs/DESIGN_SKINS.md`](docs/DESIGN_SKINS.md).
+
+**TCG data.** Any catalog or market-mark feature must use the public CC0 [rarebox-data](https://github.com/novaoc/rarebox-data) dataset via `Foundation::RareboxData` — see [`docs/RAREBOX_DATA.md`](docs/RAREBOX_DATA.md).
+
 **Guest-first storefront** (module, included by default). A catalog, cart,
 and checkout that require no account: checkout collects and validates an
 email, caps quantity, and shows Terms and Privacy links. Amounts are always
