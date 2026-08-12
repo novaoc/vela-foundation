@@ -113,6 +113,9 @@ module Rename
     "Storage: set ACTIVE_STORAGE_SERVICE to a cloud service in config/storage.yml.",
     "Deploy: set servers, proxy.host, APP_HOST, and registry in config/deploy.yml; fill .kamal/secrets (see docs/DEPLOY.md).",
     "Brand: set brand_seed_color in config/foundation.yml, then run bin/rails foundation:icon and regenerate tokens.",
+    "Product surface: set product_surface (platform|commerce|workspace|consumer) so chrome matches the app — docs/PRODUCT_SURFACE.md.",
+    "Design skin: set design_skin (material|commerce|workspace|arcade|vault|signal) — docs/DESIGN_SKINS.md.",
+    "TCG: enable rarebox_data and import marks from novaoc/rarebox-data — docs/RAREBOX_DATA.md.",
     "Legal: review every TODO-OPERATOR in the Terms and Privacy pages with counsel before launch.",
     "Admin: promote the first operator from the console (User#admin?); there is no self-serve path."
   ].freeze

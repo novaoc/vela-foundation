@@ -37,6 +37,32 @@ shared:
   # absolute URLs in mail.
   domain: "example.com"
 
+  # Product surface: which foundation chrome this generated app exposes.
+  # Modules control what code is on disk; the surface controls what the
+  # signed-in and public shells offer for *this* product. Features must
+  # only appear when they belong to the app being built.
+  # Profiles: platform | commerce | workspace | consumer
+  # See docs/PRODUCT_SURFACE.md.
+  product_surface: platform
+
+  # Optional boolean overrides on top of the profile (feature name → true/false).
+  # Example: { billing: true } on a commerce surface.
+  product_surface_features: {}
+
+  # Design skin: product-family visual language layered on MD3 tokens.
+  # material | commerce | workspace | arcade | vault | signal
+  # Blank/default pairs from product_surface (see docs/DESIGN_SKINS.md).
+  design_skin: material
+
+  # Public TCG dataset (novaoc/rarebox-data). Enable for any catalog,
+  # portfolio, or pricing feature that touches TCG marks.
+  # See docs/RAREBOX_DATA.md.
+  rarebox_data:
+    enabled: false
+    game: pokemon
+    path: ""
+    remote: "https://raw.githubusercontent.com/novaoc/rarebox-data/main"
+
   # Exact storefront feature flag (SPEC M8): only the YAML boolean true
   # enables its routes, navigation, models' entry points, and production
   # readiness requirement. Any other value is disabled. Commerce-oriented

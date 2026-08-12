@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "../stylesheets/material_tokens.css";
 @import "../stylesheets/material_system.css";
+@import "../stylesheets/design_skins.css";
 
 @theme {
   --color-md-primary: var(--md-sys-color-primary);

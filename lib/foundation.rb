@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 require_relative "foundation/modules"
+require_relative "foundation/product_surface"
+require_relative "foundation/design_skin"
+require_relative "foundation/rarebox_data"
 
 # Namespace for original foundation code (SPEC global conventions).
 module Foundation

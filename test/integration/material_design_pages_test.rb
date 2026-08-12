@@ -48,6 +48,9 @@ class MaterialDesignPagesTest < ActionDispatch::IntegrationTest
     assert_select "main#main-content.md-main"
     assert_select "header.md-top-app-bar"
     assert_select "a.md-wordmark .md-wordmark__name", text: Rails.configuration.x.foundation[:application_name]
+    assert_select "body.md-app.design-skin--material"
+    assert_select "body[data-product-surface=platform]"
+    assert_select "body[data-design-skin=material]"
   end
 
   test "static error pages use the branded responsive surface" do
