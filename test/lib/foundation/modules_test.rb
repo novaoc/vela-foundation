@@ -185,7 +185,193 @@ class FoundationModulesTest < ActiveSupport::TestCase
     assert File.exist?(File.join(@root, "lib/foundation/modules/omit.rb"))
   end
 
+  test "omitting storefront then crm succeeds with clean routes" do
+    skip_without_storefront
+    skip_without_crm
+    mirror_template_into!(@root)
+
+    omit_via_cli!(%w[storefront])
+    omit_via_cli!(%w[crm])
+
+    assert_omitted_optional_modules!(@root)
+  end
+
+  test "omitting crm then storefront succeeds with clean routes" do
+    skip_without_storefront
+    skip_without_crm
+    mirror_template_into!(@root)
+
+    omit_via_cli!(%w[crm])
+    omit_via_cli!(%w[storefront])
+
+    assert_omitted_optional_modules!(@root)
+  end
+
+  test "omit order is independent and matches multi-module omit" do
+    skip_without_storefront
+    skip_without_crm
+
+    root_ab = Dir.mktmpdir("foundation-modules-ab")
+    root_ba = Dir.mktmpdir("foundation-modules-ba")
+    root_both = Dir.mktmpdir("foundation-modules-both")
+    begin
+      mirror_template_into!(root_ab)
+      mirror_template_into!(root_ba)
+      mirror_template_into!(root_both)
+
+      omit_via_cli!(%w[storefront], root: root_ab)
+      omit_via_cli!(%w[crm], root: root_ab)
+
+      omit_via_cli!(%w[crm], root: root_ba)
+      omit_via_cli!(%w[storefront], root: root_ba)
+
+      omit_via_cli!(%w[storefront crm], root: root_both)
+
+      assert_omitted_optional_modules!(root_ab)
+      assert_omitted_optional_modules!(root_ba)
+      assert_omitted_optional_modules!(root_both)
+
+      tree_ab = snapshot_tree(root_ab)
+      tree_ba = snapshot_tree(root_ba)
+      tree_both = snapshot_tree(root_both)
+
+      assert_equal tree_ab.keys, tree_ba.keys
+      assert_equal tree_ab.keys, tree_both.keys
+      tree_ab.each do |relative, digest|
+        assert_equal digest, tree_ba[relative], "storefront→crm vs crm→storefront differ at #{relative}"
+        assert_equal digest, tree_both[relative], "sequential vs multi-omit differ at #{relative}"
+      end
+    ensure
+      FileUtils.remove_entry(root_ab, true)
+      FileUtils.remove_entry(root_ba, true)
+      FileUtils.remove_entry(root_both, true)
+    end
+  end
+
+  test "stripping one module leaves an adjacent module's markers intact" do
+    source = <<~RUBY
+      # foundation:module alpha
+      alpha_only
+      # /foundation:module alpha
+      # foundation:module beta
+      beta_only
+      # /foundation:module beta
+      if flag # foundation:module alpha
+        alpha_branch
+      else # foundation:module alpha
+        core_branch
+      end # foundation:module alpha
+    RUBY
+
+    without_alpha = Foundation::Modules::Omit.strip_markers(source, "alpha")
+    assert_includes without_alpha, "# foundation:module beta"
+    assert_includes without_alpha, "beta_only"
+    assert_includes without_alpha, "# /foundation:module beta"
+    refute_match(/foundation:module alpha/, without_alpha)
+    assert_includes without_alpha, "core_branch"
+    refute_includes without_alpha, "alpha_only"
+    refute_includes without_alpha, "alpha_branch"
+
+    without_beta = Foundation::Modules::Omit.strip_markers(source, "beta")
+    assert_includes without_beta, "# foundation:module alpha"
+    assert_includes without_beta, "alpha_only"
+    assert_includes without_beta, "# /foundation:module alpha"
+    refute_match(/foundation:module beta/, without_beta)
+    assert_includes without_beta, "if flag # foundation:module alpha"
+  end
+
+  test "after omitting every optional module the application boots and its suite passes" do
+    skip_without_storefront
+    skip_without_crm
+
+    full = Dir.mktmpdir("foundation-modules-full-omit")
+    begin
+      mirror_full_application_into!(full)
+      names = Foundation::Modules.registry(root: full).all.map(&:name)
+      assert_operator names.length, :>=, 2
+      omit_via_cli!(names, root: full)
+      assert_omitted_optional_modules!(full)
+
+      env = omitted_app_env(full)
+      boot_out, boot_err, boot_status = Open3.capture3(
+        env,
+        RbConfig.ruby, File.join(full, "bin/rails"), "runner",
+        "puts(Rails.application.class.name)",
+        chdir: full
+      )
+      assert_predicate boot_status, :success?, "boot failed:\n#{boot_err}\n#{boot_out}"
+      assert_match(/Application/, boot_out)
+
+      test_out, test_err, test_status = Open3.capture3(
+        env.merge("PARALLEL_WORKERS" => "1"),
+        RbConfig.ruby, File.join(full, "bin/rails"), "test",
+        chdir: full
+      )
+      assert_predicate test_status, :success?, "omitted suite failed:\n#{test_err}\n#{test_out}"
+    ensure
+      FileUtils.remove_entry(full, true)
+      system("dropdb", "--if-exists", "vela_foundation_omit_test", out: File::NULL, err: File::NULL)
+    end
+  end
+
   private
+
+  def omit_via_cli!(names, root: @root)
+    stdout, stderr, status = Open3.capture3(
+      RbConfig.ruby, SCRIPT, "omit", *names, "--root", root
+    )
+    assert_predicate status, :success?, "#{stderr}\n#{stdout}"
+    stdout
+  end
+
+  def assert_omitted_optional_modules!(root)
+    refute File.exist?(File.join(root, "config/foundation/modules/storefront.yml"))
+    refute File.exist?(File.join(root, "config/foundation/modules/crm.yml"))
+    refute File.exist?(File.join(root, "app/models/foundation/storefront"))
+    refute File.exist?(File.join(root, "app/models/foundation/crm"))
+
+    routes_path = File.join(root, "config/routes.rb")
+    routes = File.read(routes_path, encoding: "UTF-8")
+    refute_match(/foundation:module/, routes)
+    refute_match(%r{foundation/storefront}, routes)
+    refute_match(%r{foundation/crm}, routes)
+    assert_match(%r{root "foundation/home#show"}, routes)
+    assert_nil syntax_error_for(routes_path), "routes.rb must parse after omit"
+
+    %w[
+      app/models/user.rb
+      app/views/layouts/application.html.erb
+      config/routes.rb
+      test/test_helper.rb
+    ].each do |relative|
+      path = File.join(root, relative)
+      next unless File.file?(path)
+
+      content = File.read(path, encoding: "UTF-8")
+      refute_match(/foundation:module (storefront|crm)/, content, relative)
+    end
+  end
+
+  def syntax_error_for(path)
+    _, stderr, status = Open3.capture3(RbConfig.ruby, "-c", path)
+    return nil if status.success?
+
+    stderr
+  end
+
+  def snapshot_tree(root)
+    files = {}
+    Dir.chdir(root) do
+      Dir.glob("**/*", File::FNM_DOTMATCH).each do |relative|
+        next if relative == "." || relative == ".."
+        next if File.directory?(relative)
+        next if relative.start_with?(".git/", "tmp/", "log/", "storage/")
+
+        files[relative] = File.read(relative, mode: "rb")
+      end
+    end
+    files
+  end
 
   def mirror_template_into!(destination)
     %w[app bin config db docs lib script test README.md SPEC.md PROVENANCE.md].each do |entry|
@@ -204,5 +390,40 @@ class FoundationModulesTest < ActiveSupport::TestCase
     ].each do |relative|
       FileUtils.rm_rf(File.join(destination, relative))
     end
+  end
+
+  def mirror_full_application_into!(destination)
+    Dir.children(Rails.root).each do |entry|
+      next if %w[.git tmp log storage node_modules coverage .bundle vendor].include?(entry)
+
+      FileUtils.cp_r(Rails.root.join(entry), File.join(destination, entry))
+    end
+    %w[tmp log storage].each do |dir|
+      FileUtils.mkdir_p(File.join(destination, dir))
+    end
+  end
+
+  def omitted_app_env(root)
+    {
+      "RAILS_ENV" => "test",
+      "PATH" => ENV["PATH"],
+      "LANG" => ENV.fetch("LANG", "en_US.UTF-8"),
+      "HOME" => ENV["HOME"],
+      "BUNDLE_GEMFILE" => File.join(root, "Gemfile"),
+      "PGHOST" => ENV["PGHOST"],
+      "PGPORT" => ENV["PGPORT"],
+      "PGUSER" => ENV["PGUSER"],
+      "PGPASSWORD" => ENV["PGPASSWORD"],
+      "DATABASE_URL" => "postgres:///vela_foundation_omit_test",
+      "SECRET_KEY_BASE" => "0" * 64,
+      "RAILS_MASTER_KEY" => master_key_for(root)
+    }.compact
+  end
+
+  def master_key_for(root)
+    key_path = File.join(root, "config/master.key")
+    return File.read(key_path, encoding: "UTF-8").strip if File.file?(key_path)
+
+    ENV["RAILS_MASTER_KEY"]
   end
 end

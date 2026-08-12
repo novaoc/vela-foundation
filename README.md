@@ -145,14 +145,16 @@ owning user or through a signed 24-hour token. Admin adds product CRUD with
 validated image uploads and a bounded CSV import. The module is digital-only
 by design. While included it still respects the runtime
 `storefront_enabled` flag; omit it entirely with
-`bin/foundation-modules omit storefront`. See
-[`docs/STOREFRONT.md`](docs/STOREFRONT.md).
+`bin/foundation-modules omit storefront`. To drop several modules at once
+(recommended), pass every name: `bin/foundation-modules omit storefront crm`.
+See [`docs/STOREFRONT.md`](docs/STOREFRONT.md) and [`docs/MODULES.md`](docs/MODULES.md).
 
 **CRM** (module, included by default). Organization-scoped contacts,
 companies, leads, opportunities, pipelines and stages, notes, tasks, tags,
 and an activity timeline. Every query is scoped server-side; probing another
 organization's id returns the same 404 as a missing id. Omit with
-`bin/foundation-modules omit crm`. See [`docs/CRM.md`](docs/CRM.md).
+`bin/foundation-modules omit crm` (or together with other modules as above).
+See [`docs/CRM.md`](docs/CRM.md).
 
 **Hosted preview runtime.** A deploy-time flag turns the application into a
 disposable preview: local disk storage, `X-Robots-Tag: noindex` on every

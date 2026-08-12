@@ -37,11 +37,12 @@ module FoundationModulesCli
       list(options[:root])
       0
     when "omit"
-      name = argv.shift
-      raise Error, "omit requires a module name (try: bin/foundation-modules list)" if name.nil? || name.empty?
+      names = argv.shift(argv.length).map(&:strip).reject(&:empty?)
+      raise Error, "omit requires a module name (try: bin/foundation-modules list)" if names.empty?
 
-      result = Foundation::Modules.omit!(name, root: options[:root])
-      $stdout.puts("Omitted module #{name} under #{options[:root]}")
+      result = Foundation::Modules.omit!(*names, root: options[:root])
+      label = names.length == 1 ? "module #{names.first}" : "modules #{names.join(', ')}"
+      $stdout.puts("Omitted #{label} under #{options[:root]}")
       $stdout.puts("Removed #{result.removed_paths.length} paths; rewrote #{result.rewritten_files.length} files.")
       result.removed_paths.each { |path| $stdout.puts("  - #{path}") }
       result.rewritten_files.each { |path| $stdout.puts("  ~ #{path}") }
@@ -74,11 +75,13 @@ module FoundationModulesCli
       bin/foundation-modules — generation-time module composition
 
         list                     List declared modules
-        omit NAME                Remove NAME from --root (default cwd)
+        omit NAME [NAME...]      Remove one or more modules from --root
         --root PATH              Operate on PATH instead of cwd
 
-      Omission deletes owned paths, strips host markers, scrubs schema tables
-      and foundation.yml keys, then residue-scans. Reversible from git.
+      Prefer a single omit with every module you are dropping — multi-module
+      omit is order-independent and matches sequential single omits. Omission
+      deletes owned paths, strips host markers, scrubs schema tables and
+      foundation.yml keys, then residue-scans. Reversible from git.
       See docs/MODULES.md.
     HELP
   end

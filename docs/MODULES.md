@@ -80,17 +80,23 @@ not discover omitted modules.
 `default: included` module on disk. Runtime flags such as
 `storefront_enabled` continue to work exactly as today.
 
-**Mechanism.** `bin/foundation-modules omit <name> --root <path>`:
+**Mechanism.** `bin/foundation-modules omit <name> [name...] --root <path>`.
+When dropping more than one module, pass every name in a **single**
+invocation — that is the recommended path. Sequential single-module omits
+are supported and must be order-independent (A then B equals B then A
+equals `omit A B`).
 
-1. Loads the manifest.
+1. Loads each manifest.
 2. Deletes every owned path (files and directory trees).
-3. Deletes the manifest itself.
-4. Strips host-file contributions delimited by markers (below).
+3. Deletes each manifest itself.
+4. Strips host-file contributions delimited by markers (below). One
+   module's strip never consumes another module's markers, including when
+   regions are adjacent.
 5. Removes owned `config_keys` from `config/foundation.yml`.
 6. Removes `db/schema.rb` `create_table` / `add_foreign_key` rows whose
    names match `table_prefixes`.
-7. Runs a residue scan (`residue_patterns` + marker leftovers). Non-zero
-   exit if anything remains.
+7. Runs a residue scan (`residue_patterns` + marker leftovers) for every
+   omitted name. Non-zero exit if anything remains.
 
 Omission is plain filesystem surgery. It is fully reversible from git
 (`git checkout -- .` or restoring the pre-omit commit). No migration
@@ -241,13 +247,16 @@ The test suite for the mechanism:
 
 1. Copies the template into a temporary root (excluding `.git`, `tmp`,
    `log`, storage artifacts).
-2. Runs `bin/foundation-modules omit storefront --root <copy>`.
+2. Runs `bin/foundation-modules omit storefront --root <copy>` (and the
+   same for each other module).
 3. Asserts the residue scan is clean (CLI exit 0 and explicit assertions).
-4. Asserts owned paths and storefront migrations/tables are gone.
-5. Asserts host files no longer reference `Foundation::Storefront` or
-   storefront route helpers.
-6. Loads the omitter’s result for seeds/routes/nav and checks the
-   storefront demo seed path is gone.
+4. Asserts owned paths and module migrations/tables are gone.
+5. Asserts host files no longer reference module constants or route helpers.
+6. Asserts multi-module omit is order-independent: storefront then crm,
+   crm then storefront, and `omit storefront crm` produce byte-identical
+   trees; adjacent marked regions keep the survivor's markers intact.
+7. After omitting every optional module, boots the omitted tree and runs
+   its test suite.
 
 **Default configuration** (no omit) remains the normal `bin/rails test`
 gate: behaviour identical to pre-module-composition HEAD.
@@ -257,8 +266,5 @@ gate: behaviour identical to pre-module-composition HEAD.
 - Generator UI that presents the module menu (host-side create app flow).
 - Converting storefront’s runtime flag into “included always on” after
   a future cleanup; the flag stays while the module is included.
-- Physically running the full Rails suite inside the omitted copy in CI
-  (boot + migrate + test). The residue test proves structural absence;
-  full omitted-app CI is a follow-up once more modules exist.
 - Automatic marker discovery; authors must wrap host contributions.
 - Packwerk/engines packaging; modules are plain trees + manifests.

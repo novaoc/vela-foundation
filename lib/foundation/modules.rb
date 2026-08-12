@@ -14,8 +14,11 @@ module Foundation
       Registry.new(root).available?(name)
     end
 
-    def self.omit!(name, root: Dir.pwd)
-      Omit.new(root: root, name: name).call
+    # Omit one or more modules. Prefer a single invocation with every name
+    # when dropping several modules — it is order-independent and matches
+    # sequential omit A then B (and B then A) byte-for-byte.
+    def self.omit!(*names, root: Dir.pwd)
+      Omit.new(root: root, names: names).call
     end
   end
 end
