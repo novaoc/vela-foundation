@@ -26,7 +26,7 @@ module Foundation
         prices = @client.latest_prices[:prices]
         @set_ids.each do |set_id|
           cards = Array(@client.cards_for_set(set_id))
-          ranked = cards.sort_by { |card| [-prices[card["id"].to_s].to_f, card["number"].to_s] }
+          ranked = cards.sort_by { |card| [ -prices[card["id"].to_s].to_f, card["number"].to_s ] }
           ranked.first(@limit_per_set).each do |card|
             rid = card["id"].to_s
             next if rid.blank?

@@ -14,9 +14,9 @@ namespace :rarebox do
   end
 
   desc "Print sample normalized cards for SET (default base1)"
-  task :sample_cards, [:set_id] => :environment do |_t, args|
+  task :sample_cards, [ :set_id ] => :environment do |_t, args|
     set_id = args[:set_id].presence || "base1"
-    Foundation::RareboxData::CatalogImport.new(set_ids: [set_id], limit_per_set: 5).each_card do |attrs|
+    Foundation::RareboxData::CatalogImport.new(set_ids: [ set_id ], limit_per_set: 5).each_card do |attrs|
       puts attrs.slice(:rarebox_id, :name, :set_name, :market_price_usd, :image_url).inspect
     end
   end
