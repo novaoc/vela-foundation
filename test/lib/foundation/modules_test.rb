@@ -5,6 +5,7 @@ require "fileutils"
 require "open3"
 require "rbconfig"
 require "tmpdir"
+require "uri"
 
 # Generation-time module composition (docs/MODULES.md). Default checkouts keep
 # every included module; omit is opt-in filesystem surgery reversible from git.
@@ -297,6 +298,7 @@ class FoundationModulesTest < ActiveSupport::TestCase
       assert_omitted_optional_modules!(full)
 
       env = omitted_app_env(full)
+      prepare_omit_database!(env, full)
       boot_out, boot_err, boot_status = Open3.capture3(
         env,
         RbConfig.ruby, File.join(full, "bin/rails"), "runner",
@@ -418,10 +420,33 @@ class FoundationModulesTest < ActiveSupport::TestCase
       "PGPORT" => ENV["PGPORT"],
       "PGUSER" => ENV["PGUSER"],
       "PGPASSWORD" => ENV["PGPASSWORD"],
-      "DATABASE_URL" => "postgres:///vela_foundation_omit_test",
+      # Inherit CI/local connection settings (host, user, password) and only
+      # swap the database name. A bare socket URL breaks GitHub Actions
+      # where Postgres is reached over TCP via DATABASE_URL.
+      "DATABASE_URL" => omit_database_url,
       "SECRET_KEY_BASE" => "0" * 64,
       "RAILS_MASTER_KEY" => master_key_for(root)
     }.compact
+  end
+
+  def omit_database_url
+    base = ENV["DATABASE_URL"].to_s.strip
+    if base.empty?
+      "postgres:///vela_foundation_omit_test"
+    else
+      uri = URI.parse(base)
+      uri.path = "/vela_foundation_omit_test"
+      uri.to_s
+    end
+  end
+
+  def prepare_omit_database!(env, root)
+    create_out, create_err, create_status = Open3.capture3(
+      env,
+      RbConfig.ruby, File.join(root, "bin/rails"), "db:prepare",
+      chdir: root
+    )
+    assert_predicate create_status, :success?, "db:prepare failed for omit suite:\n#{create_err}\n#{create_out}"
   end
 
   def master_key_for(root)
