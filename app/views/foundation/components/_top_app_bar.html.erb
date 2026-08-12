@@ -2,17 +2,17 @@
   <div class="md-top-app-bar__inner">
     <%= link_to root_path, class: "md-wordmark", aria: { label: "#{identity[:application_name]} home" } do %>
       <span class="md-wordmark__mark" aria-hidden="true"></span>
-      <span><%= identity[:application_name] %></span>
+      <span class="md-wordmark__name"><%= identity[:application_name] %></span>
     <% end %>
     <div class="md-top-app-bar__actions">
       <% if user_signed_in? %>
         <span class="md-user-label"><%= current_user.email %></span>
       <% else %>
         <% if Foundation.module_available?("storefront") && Foundation.storefront_enabled? # foundation:module storefront %>
-          <%= link_to "Shop", storefront_products_path, class: "md-button md-button--text" %>
-          <%= link_to "Cart", storefront_cart_path, class: "md-button md-button--text md-top-app-bar__pricing" %>
+          <%= link_to "Shop", storefront_products_path, class: "md-button md-button--text md-top-app-bar__link" %>
+          <%= link_to "Cart", storefront_cart_path, class: "md-button md-button--text md-top-app-bar__link" %>
         <% else # foundation:module storefront %>
-          <%= link_to "Pricing", pricing_path, class: "md-button md-button--text md-top-app-bar__pricing" %>
+          <%= link_to "Pricing", pricing_path, class: "md-button md-button--text md-top-app-bar__link" %>
         <% end # foundation:module storefront %>
       <% end %>
       <button type="button" class="md-icon-button" aria-label="Change color theme"
@@ -20,7 +20,7 @@
         <%= material_symbol(:light_mode, fill: true, class: "md-theme-icon", data: { foundation__theme_target: "icon" }) %>
       </button>
       <% unless user_signed_in? %>
-        <%= link_to "Sign in", new_user_session_path, class: "md-button md-button--outlined" %>
+        <%= link_to "Sign in", new_user_session_path, class: "md-button md-button--outlined md-top-app-bar__account" %>
         <% if Foundation.module_available?("storefront") && Foundation.storefront_enabled? # foundation:module storefront %>
         <% else # foundation:module storefront %>
           <%= link_to "Get started", new_user_registration_path, class: "md-button md-button--filled md-top-app-bar__cta" %>

@@ -1,14 +1,18 @@
 # frozen_string_literal: true
 
+require "json"
+
 module Foundation
   # Web application manifest built from the product identity (SPEC M10.2).
   #
-  # Nothing here is hardcoded: name, description, and both colors come from
-  # config/foundation.yml, so stamping an identity with bin/rename (or editing
-  # that file) updates the installed application's name, splash screen, and
-  # theme without touching this class.
+  # Nothing here is hardcoded: name, description, theme color, and icons come
+  # from config/foundation.yml (and the MD3 surface token derived from the
+  # brand seed), so stamping an identity with bin/rename (or editing that file)
+  # updates the installed application's name, splash screen, and theme without
+  # touching this class.
   class WebManifest
     SHORT_NAME_LIMIT = 12
+    TOKENS_PATH = "config/material_tokens.json"
 
     def initialize(identity)
       @identity = identity
@@ -24,7 +28,7 @@ module Foundation
         "scope" => "/",
         "display" => "standalone",
         "theme_color" => theme_color,
-        "background_color" => theme_color,
+        "background_color" => background_color,
         "icons" => icons
       }
     end
@@ -35,6 +39,16 @@ module Foundation
 
     def theme_color
       AppIcon.normalize_color(@identity[:brand_seed_color])
+    end
+
+    # Launch / splash background. Uses the light MD3 surface (not the brand
+    # seed) so the splash reads as the app canvas rather than a solid brand
+    # block while the first paint loads.
+    def background_color
+      surface = light_surface_token
+      return AppIcon.normalize_color(surface) if surface.present?
+
+      "#FFFFFF"
     end
 
     private
@@ -58,9 +72,21 @@ module Foundation
     end
 
     def icons
-      %w[any maskable].map do |purpose|
-        { "src" => "/icon.svg", "type" => "image/svg+xml", "sizes" => "any", "purpose" => purpose }
-      end
+      [
+        { "src" => "/icon-192.png", "type" => "image/png", "sizes" => "192x192", "purpose" => "any" },
+        { "src" => "/icon-512.png", "type" => "image/png", "sizes" => "512x512", "purpose" => "any" },
+        { "src" => "/icon-512.png", "type" => "image/png", "sizes" => "512x512", "purpose" => "maskable" },
+        { "src" => "/icon.svg", "type" => "image/svg+xml", "sizes" => "any", "purpose" => "any" }
+      ]
+    end
+
+    def light_surface_token
+      path = Rails.root.join(TOKENS_PATH)
+      return nil unless path.exist?
+
+      JSON.parse(path.read).dig("schemes", "light", "surface")
+    rescue JSON::ParserError
+      nil
     end
   end
 end

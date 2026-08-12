@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_11_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_11_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -552,7 +552,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_140000) do
     t.string "kind", null: false
     t.index ["created_at"], name: "index_reauthentication_attempts_on_created_at"
     t.index ["kind", "key_digest", "created_at"], name: "index_reauthentication_attempts_lookup"
-    t.check_constraint "kind::text = ANY (ARRAY['account'::character varying, 'ip'::character varying]::text[])", name: "reauthentication_attempts_kind_allowed"
+    t.check_constraint "kind::text = ANY (ARRAY['account'::character varying::text, 'ip'::character varying::text])", name: "reauthentication_attempts_kind_allowed"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -891,10 +891,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_140000) do
     t.string "image_url"
     t.integer "inventory_quantity", default: 0, null: false
     t.string "name", null: false
+    t.string "origin"
     t.integer "position", default: 0, null: false
     t.bigint "price_cents", null: false
+    t.string "roast_level"
     t.string "sku", null: false
     t.string "slug", null: false
+    t.string "tasting_notes"
     t.datetime "updated_at", null: false
     t.index ["active", "position"], name: "index_storefront_products_on_active_and_position"
     t.index ["sku"], name: "index_storefront_products_on_sku", unique: true
@@ -909,6 +912,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_140000) do
     t.check_constraint "length(btrim(slug::text)) > 0", name: "storefront_products_slug_present"
     t.check_constraint "price_cents <= 999999999", name: "storefront_products_price_bounded"
     t.check_constraint "price_cents >= 0", name: "storefront_products_price_nonnegative"
+    t.check_constraint "roast_level IS NULL OR (roast_level::text = ANY (ARRAY['light'::character varying::text, 'medium'::character varying::text, 'dark'::character varying::text]))", name: "storefront_products_roast_level_allowed"
   end
 
   create_table "users", force: :cascade do |t|

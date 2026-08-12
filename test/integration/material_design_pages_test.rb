@@ -37,12 +37,17 @@ class MaterialDesignPagesTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "nav.md-navigation", count: 1
+    assert_select "nav[aria-label='Primary']", count: 1
     # foundation:module storefront
     assert_select "nav.md-navigation a[href='#{root_path}'], nav.md-navigation a[href='#{storefront_products_path}']", minimum: 1
     assert_select "nav.md-navigation a[href='#{storefront_cart_path}']", minimum: 1
     # /foundation:module storefront
-    assert_select "nav.md-navigation form button.md-navigation__signout", text: "Sign out", count: 1
+    # Compact keeps Sign out behind More; rail/drawer keep an inline control.
+    assert_select "nav.md-navigation form button.md-navigation__signout", text: "Sign out", minimum: 1
+    assert_select "nav.md-navigation .md-navigation__more", count: 1
     assert_select "main#main-content.md-main"
+    assert_select "header.md-top-app-bar"
+    assert_select "a.md-wordmark .md-wordmark__name", text: Rails.configuration.x.foundation[:application_name]
   end
 
   test "static error pages use the branded responsive surface" do

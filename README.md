@@ -246,21 +246,22 @@ background color follow the configuration instead of being hardcoded. No
 service worker is registered: the foundation ships no offline cache, so it
 cannot serve a stale authenticated page.
 
-`public/icon.svg` is a placeholder mark generated from `brand_seed_color`
-alone — a full-bleed background with a centered ring in whichever of white or
-black contrasts better with the seed. It is square and maskable: everything
-visible stays inside the guaranteed-safe centered circle. Regenerate it after
-changing the seed:
+`public/icon.svg` plus PNG sizes (`icon-192.png`, `icon-512.png`,
+`apple-touch-icon.png`) are placeholder marks generated from
+`brand_seed_color` alone — a full-bleed background with a centered ring in
+whichever of white or black contrasts better with the seed. They are square
+and maskable: everything visible stays inside the guaranteed-safe centered
+circle. The manifest splash `background_color` uses the light MD3 surface
+token (not the brand seed). Regenerate after changing the seed:
 
 ```sh
 bin/rails foundation:icon
 ```
 
-A test fails if the committed icon does not match the configured seed, so the
-drift cannot ship silently. To use a real mark, replace `public/icon.svg`
-with your own square SVG (keep the artwork inside the centered 80% circle so
-Android's mask cannot crop it) and stop running the task. Add a PNG at the
-same path only if you also update the manifest entry's `type` and `sizes`.
+A test fails if a committed icon does not match the configured seed, so the
+drift cannot ship silently. To use a real mark, replace the SVG and PNG files
+under `public/` (keep artwork inside the centered 80% circle so Android's
+mask cannot crop it) and stop running the task.
 
 Changing `brand_seed_color` also requires regenerating the Material Design 3
 tokens, which are committed so production needs no Node runtime:

@@ -81,6 +81,56 @@ class MaterialDesignTokensTest < ActiveSupport::TestCase
     assert_no_match(/(?:\{|;)\s*width:\s*(?:[4-9]\d{2,}|\d{4,})px/, css)
   end
 
+  test "fixed chrome clears iOS safe-area insets" do
+    css = SYSTEM_CSS_PATH.read
+
+    assert_includes css, "--md-safe-area-inset-top: env(safe-area-inset-top, 0px)"
+    assert_includes css, "--md-safe-area-inset-right: env(safe-area-inset-right, 0px)"
+    assert_includes css, "--md-safe-area-inset-bottom: env(safe-area-inset-bottom, 0px)"
+    assert_includes css, "--md-safe-area-inset-left: env(safe-area-inset-left, 0px)"
+    assert_includes css, ".md-top-app-bar"
+    assert_includes css, "padding-top: var(--md-safe-area-inset-top)"
+    assert_includes css, ".md-navigation"
+    assert_includes css, "padding-bottom: var(--md-safe-area-inset-bottom)"
+    assert_includes css, "--md-navigation-space: calc(80px + var(--md-safe-area-inset-bottom))"
+    assert_match(/font-size:\s*max\(1rem,\s*16px\)/, css)
+    assert_includes css, "min-height: 44px"
+    assert_includes css, "overflow-x: clip"
+  end
+
+  test "bottom navigation is fixed below the rail breakpoint and not above" do
+    css = SYSTEM_CSS_PATH.read
+    base = css[/\.md-navigation \{[^}]+\}/]
+    rail = css[%r{@media \(min-width: 600px\) \{.*?\n\}\n\n@media}m]
+
+    assert_includes base, "position: fixed"
+    assert_includes base, "bottom: 0"
+    assert_includes rail, ".md-navigation { position: sticky"
+    assert_includes rail, ".md-navigation__more { display: none"
+    assert_includes css, ".md-navigation__item--secondary { display: none"
+    assert_includes css, ".md-navigation__more"
+  end
+
+  test "button and chip labels are prevented from wrapping" do
+    css = SYSTEM_CSS_PATH.read
+
+    assert_match(/\.md-button,\s*input\[type="submit"\],\s*\.btn\s*\{[^}]*white-space:\s*nowrap/m, css)
+    assert_match(/\.md-chip\s*\{[^}]*white-space:\s*nowrap/m, css)
+    assert_includes css, ".md-navigation__item > span:not(.material-symbol)"
+    assert_match(/\.md-navigation__item > span:not\(\.material-symbol\)\s*\{[^}]*white-space:\s*nowrap/m, css)
+  end
+
+  # foundation:module storefront
+  test "empty product image placeholder is bounded by aspect ratio" do
+    css = SYSTEM_CSS_PATH.read
+
+    assert_match(/\.storefront-product-card__image,\s*\.storefront-product-detail__image\s*\{[^}]*aspect-ratio:\s*4\s*\/\s*3/m, css)
+    assert_match(/\.storefront-image-placeholder\s*\{[^}]*aspect-ratio:\s*4\s*\/\s*3/m, css)
+    assert_no_match(/\.storefront-product-card__image[^}]*min-height:\s*240px/m, css)
+    assert_includes css, "minmax(min(100%, 240px), 1fr)"
+  end
+  # /foundation:module storefront
+
   test "icon subset and mapping are pinned" do
     font = Rails.root.join("app/assets/fonts/material-symbols-rounded-subset.woff2")
     symbols = Rails.root.join("tools/material/symbols.txt").read.lines.filter_map { |line| line.split.first }
