@@ -59,8 +59,9 @@ class StorefrontCheckoutServicesTest < ActiveSupport::TestCase
     assert_equal @product.name, item.dig(:price_data, :product_data, :name)
     assert_equal @order.public_reference, gateway.attributes[:client_reference_id]
     assert_equal({ order_reference: @order.public_reference }, gateway.attributes[:metadata])
-    assert_match %r{\Ahttps://example\.com/storefront/orders/}, gateway.attributes[:success_url]
-    assert_equal "https://example.com/storefront/cart", gateway.attributes[:cancel_url]
+    origin = "https://#{Rails.configuration.x.foundation[:domain]}"
+    assert_match %r{\A#{Regexp.escape(origin)}/storefront/orders/}, gateway.attributes[:success_url]
+    assert_equal "#{origin}/storefront/cart", gateway.attributes[:cancel_url]
     assert_equal "storefront_order_#{@order.public_reference}", gateway.idempotency_key
     assert_operator gateway.attributes[:expires_at], :>=, 40.minutes.from_now.to_i
   end

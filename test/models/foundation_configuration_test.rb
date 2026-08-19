@@ -46,12 +46,15 @@ class FoundationConfigurationTest < ActiveSupport::TestCase
     end
   end
 
-  test "foundation config template defaults" do
+  test "foundation config identity is present and well-formed" do
     foundation = Rails.configuration.x.foundation
 
-    assert_equal "Application", foundation[:application_name]
+    # Identity keys are STAMPED at generation (bin/rename or Vela's shaping),
+    # so this test asserts shape, not the template's literal values — a
+    # generated app named anything must still pass its own suite unchanged.
+    assert foundation[:application_name].present?, "application_name must be stamped"
     assert_match(/\A#\h{6}\z/, foundation[:brand_seed_color])
-    assert_equal "platform", foundation[:product_surface]
+    assert foundation[:product_surface].present?, "product_surface must be set"
     assert_equal "material", foundation[:design_skin]
     assert_equal false, foundation.dig(:rarebox_data, :enabled)
     # foundation:module storefront
