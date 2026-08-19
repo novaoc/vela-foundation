@@ -1,4 +1,14 @@
 <%
+  # Locals default via local_assigns so a direct render of this partial
+  # (instead of the md_button helper) degrades gracefully rather than
+  # crashing the page on a missing optional local.
+  label = local_assigns.fetch(:label, nil)
+  href = local_assigns.fetch(:href, nil)
+  variant = local_assigns.fetch(:variant, :filled)
+  icon = local_assigns.fetch(:icon, nil)
+  loading = local_assigns.fetch(:loading, false)
+  disabled = local_assigns.fetch(:disabled, false)
+  attributes = local_assigns.fetch(:attributes, {}).dup
   classes = class_names("md-button", "md-button--#{variant}", attributes.delete(:class), "is-loading": loading)
   icon_markup = icon.present? ? material_symbol(icon, size: 20) : nil
   body = safe_join([icon_markup, tag.span(label)], "")
